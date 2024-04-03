@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     avatar = models.ImageField(upload_to='postImageUsers', blank=False)
-    active = models.BooleanField(default=True)  # admin khóa tài khoản
+    is_active = models.BooleanField(default=True)  # admin khóa tài khoản
 
 
 class Journey(models.Model):
@@ -12,7 +12,7 @@ class Journey(models.Model):
     start_location = models.CharField(max_length=100)
     end_location = models.CharField(max_length=100)
     created_date = models.DateTimeField(auto_now_add=True)
-    departure_time = models.DateTimeField(auto_now_add=True)  # thời gian khởi hành
+    departure_time = models.DateTimeField(null=True, blank=True)  # thời gian khởi hành
     active = models.BooleanField(default=True)
 
     def __str__(self):

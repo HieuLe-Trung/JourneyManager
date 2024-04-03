@@ -39,8 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'journeys.apps.JourneysConfig'
+    'journeys.apps.JourneysConfig',
+    'oauth2_provider'
 ]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -92,7 +98,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = "shareJourney.User"
+AUTH_USER_MODEL = "journeys.User"
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -134,3 +140,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CLIENT_ID = '32kR6uGdkZFAMED7IiZUohjaX1yAdz3MpmQhEx7Z'
+CLIENT_SECRET = 'pbkdf2_sha256$600000$UzpzD386TlPyvoFJMtkTGC$186DPpnG1hRLv4GLQCLOvtnmi4IE9nVZOklglBkcXSc='
