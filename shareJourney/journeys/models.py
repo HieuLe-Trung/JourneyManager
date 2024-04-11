@@ -1,15 +1,16 @@
+from cloudinary.models import CloudinaryField
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
-    avatar = models.ImageField(upload_to='postImageUsers', blank=False)
+    avatar = CloudinaryField(folder="avatarJourney",null=True)
     is_active = models.BooleanField(default=True)  # admin khóa tài khoản
 
 
 class Journey(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # người tạo hành trình
-    name = models.CharField(max_length=100, blank=False,null=False,default='')
+    user_create = models.ForeignKey(User, on_delete=models.CASCADE)  # người tạo hành trình
+    name_journey = models.CharField(max_length=100, blank=False,null=False,default='')
     start_location = models.CharField(max_length=100)
     end_location = models.CharField(max_length=100)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -46,7 +47,7 @@ class Participation(Interaction):  # ds user tham gia hành trình
 
 class Post(Interaction):
     content = models.TextField()
-    image = models.ImageField(upload_to='postImageJourney', null=True, blank=True)
+    image = CloudinaryField(folder="PostJourney",null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     lock_cmt = models.BooleanField(default=False)  # đóng khi đã đủ người tham gia
     visit_point = models.OneToOneField(VisitPoint, related_name='post', on_delete=models.CASCADE, null=True, blank=True)

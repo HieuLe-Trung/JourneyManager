@@ -59,13 +59,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'shareJourney.urls'
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'djkg7qktn',
-    'API_KEY': '761645745792171',
-    'API_SECRET': '8L4nP4-nW_5boss5jgFfXX9iFUc'
-}
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
+cloudinary.config(
+    cloud_name="djkg7qktn",
+    api_key="761645745792171",
+    api_secret="8L4nP4-nW_5boss5jgFfXX9iFUc"
+)
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
