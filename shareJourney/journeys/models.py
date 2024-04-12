@@ -4,16 +4,17 @@ from django.contrib.auth.models import AbstractUser
 
 
 class BaseModel(models.Model):
-    created_date = models.DateField(auto_now_add=True)
-    updated_date = models.DateField(auto_now=True)
+    created_date = models.DateTimeField(auto_now_add=True, null=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
 
 
 class User(AbstractUser):
-    avatar = CloudinaryField(folder="avatarJourney", null=True)
+    avatar = models.ImageField(upload_to="avatarJourney", null=True)
     is_active = models.BooleanField(default=True)  # admin khóa tài khoản
+    # avatar = CloudinaryField(folder="avatarJourney", null=True)
 
 
 class Journey(BaseModel):
@@ -28,7 +29,7 @@ class Journey(BaseModel):
         return self.name_journey
 
 
-class Interaction(models.Model):
+class Interaction(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     journey = models.ForeignKey(Journey, on_delete=models.CASCADE)
 
@@ -52,14 +53,18 @@ class Participation(Interaction):  # ds user tham gia hành trình
     rating = models.IntegerField(null=True, blank=True)
 
 
-class Post(Interaction, BaseModel):
+class Post(Interaction):
     content = models.TextField()
-    image = CloudinaryField(folder="PostJourney", null=True, blank=True)
     lock_cmt = models.BooleanField(default=False)  # đóng khi đã đủ người tham gia
     visit_point = models.OneToOneField(VisitPoint, related_name='post', on_delete=models.CASCADE, null=True, blank=True)
+    images = models.ManyToManyField('Image', related_name='posts')
 
 
-class InteractionPost(models.Model):
+class Image(models.Model):
+    image = models.ImageField(upload_to="PostJourney", null=True, blank=True)
+
+
+class InteractionPost(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, default='')
 
@@ -72,7 +77,7 @@ class Like(InteractionPost):
         unique_together = ("post", "user")
 
 
-class Comment(InteractionPost,BaseModel):
+class Comment(InteractionPost):
     content = models.TextField()
     is_approved = models.BooleanField(default=False)  # duyệt người tham gia(tick)
     # khi được duyệt thì true, đưa người dùng đó vào participation và cũng chỉnh approved=True

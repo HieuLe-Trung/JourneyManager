@@ -1,21 +1,33 @@
 from django.contrib import admin
-from django import forms
-from ckeditor_uploader.widgets \
-    import CKEditorUploadingWidget
-from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report
+from django.utils.html import mark_safe
+
+from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report, Image
 
 
-class PostForm(forms.ModelForm):
-    content = forms.CharField(widget=CKEditorUploadingWidget)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['id', 'username', 'is_active']
+    readonly_fields = ['img']
 
-    class Meta:
-        model = Post
-        fields = '__all__'
+    def img(self, user):
+        if user:
+            return mark_safe(
+                '<img src="/static/{url}" width="240" />' \
+                    .format(url=user.avatar.name)
+            )
 
 
 class PostAdmin(admin.ModelAdmin):
     list_display = ['id', 'content', 'created_date', 'user']
-    form = PostForm
+    readonly_fields = ['imagePost']
+
+    def imagePost(self, post):  # ĐANG GẶP LỖI HIỂN THỊ ẢNH
+        if post.images.exists():
+            images_html = ''
+            for image in post.images.all():
+                images_html += f'<img src="{image.image.url}" width="100"/>'
+            return mark_safe(images_html)
+        else:
+            return 'No images'
 
 
 class VisitPointInlineAdmin(admin.StackedInline):
@@ -28,9 +40,26 @@ class ParticipationInlineAdmin(admin.StackedInline):
     fk_name = 'journey'
 
 
+class ParticipationAdmin(admin.ModelAdmin):
+    list_display = ['id', 'journey']
+
+
 class JourneyAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name_journey', 'created_date', 'start_location', 'end_location', 'active', 'user_create']
     search_fields = ['name_journey']
     inlines = [VisitPointInlineAdmin, ParticipationInlineAdmin, ]
+
+
+class ImageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'imgs']
+    readonly_fields = ['imgs']
+
+    def imgs(self, image):  # truyền obj của model
+        if image:
+            return mark_safe(
+                '<img src="/static/{url}" width="100" />' \
+                    .format(url=image.image.name)
+            )
 
 
 class JourneyAppAdminSite(admin.AdminSite):
@@ -40,9 +69,11 @@ class JourneyAppAdminSite(admin.AdminSite):
 
 
 admin_site = JourneyAppAdminSite(name='myjourney')
+
 admin_site.register(Journey, JourneyAdmin)
-admin_site.register(User)
+admin_site.register(User, UserAdmin)
 admin_site.register(VisitPoint)
-admin_site.register(Participation)
-admin_site.register(Post,PostAdmin)
+admin_site.register(Participation,ParticipationAdmin)
+admin_site.register(Post, PostAdmin)
 admin_site.register(Report)
+admin_site.register(Image, ImageAdmin)
