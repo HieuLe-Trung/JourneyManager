@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'journeys.apps.JourneysConfig',
+    'rest_framework',
     'oauth2_provider'
 ]
 REST_FRAMEWORK = {
@@ -139,5 +140,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CLIENT_ID = '32kR6uGdkZFAMED7IiZUohjaX1yAdz3MpmQhEx7Z'
-CLIENT_SECRET = 'pbkdf2_sha256$600000$UzpzD386TlPyvoFJMtkTGC$186DPpnG1hRLv4GLQCLOvtnmi4IE9nVZOklglBkcXSc='
+CLIENT_ID = 'C1uW7lZhxcG4nqKBwiqiakAMYmRz5DGkuOUDlDhL'
+CLIENT_SECRET = 'xiQNKzXV86nLpmlwg0wBpTs6OhUfBZZHn9IgjamzRZktU4weTe7I7k4JK7Rk3obsJfwJhG5u1p2dukNptdg3t1diaUDUuSmWR9mzcww60Kd8rv96KItmnMac7PRkkyaK'
