@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from .models import User
+from .models import User, Journey
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,6 +18,12 @@ class UserSerializer(serializers.ModelSerializer):
         data = validated_data.copy()
 
         user = User(**data)
-        user.set_password((data['password']))  # băm
+        user.set_password((data['password']))
         user.save()
         return user
+
+
+class JourneySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Journey
+        fields = ['name_journey', 'start_location', 'end_location', 'departure_time']
