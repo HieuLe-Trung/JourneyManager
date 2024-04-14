@@ -24,6 +24,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class JourneySerializer(serializers.ModelSerializer):
+    user_create = UserSerializer(read_only=True)
+
     class Meta:
         model = Journey
-        fields = ['name_journey', 'start_location', 'end_location', 'departure_time']
+        fields = ['id','user_create', 'name_journey', 'start_location', 'end_location', 'departure_time']

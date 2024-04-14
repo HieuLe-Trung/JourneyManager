@@ -24,7 +24,7 @@ class Journey(BaseModel):
     end_location = models.CharField(max_length=100)
     departure_time = models.DateTimeField(null=True, blank=True)  # thời gian khởi hành
     active = models.BooleanField(default=True)
-
+    #thêm trường tính time kết thúc
     def __str__(self):
         return self.name_journey
 

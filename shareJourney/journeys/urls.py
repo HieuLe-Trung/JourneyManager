@@ -4,6 +4,7 @@ from . import views
 
 router = DefaultRouter()
 router.register('journey',views.JourneyViewSet,basename='journey')
+router.register('get_journey',views.JourneyGetViewSet,basename='get_journey')
 router.register('user',views.UserViewSet)
 urlpatterns = [
     path('', include(router.urls), name="index")
