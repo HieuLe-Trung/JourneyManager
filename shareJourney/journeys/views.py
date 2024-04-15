@@ -7,10 +7,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from journeys import serializers, perms, paginators
-from journeys.models import User, Journey
+from journeys.models import User, Journey, Post
 
 
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):  # post nên dùng create
+class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):  # post nên dùng create
     queryset = User.objects.filter(is_active=True).all()
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
@@ -43,15 +43,25 @@ class JourneyGetViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retriev
     def get_queryset(self):
         queries = self.queryset
 
-        q = self.request.query_params.get("q")  # search /?q=...
+        q = self.request.query_params.get("q")  # khi search /?q=... thì lấy giá trị q về
         if q:
-            try:
-                q_int = int(q)
-                queries = queries.filter(Q(name_journey__icontains=q) | Q(pk=q_int))
-            except ValueError:
-                queries = queries.filter(name_journey__icontains=q)
+            queries = queries.filter(name_journey__icontains=q)
 
         return queries
+
+
+# class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView, generics.CreateAPIView):
+#     queryset = Post.objects.all()
+#     serializer_class = serializers.PostSerializer
+#     permission_classes = [permissions.AllowAny]
+#
+#     def perform_create(self, serializer):  # khi gọi api create sẽ lấy user đang đăng nhập gán vào
+#         serializer.save(user=self.request.user)
+#
+#     def get_permissions(self):
+#         if self.action in []:
+#             return [permissions.IsAuthenticated()]
+#         return self.permission_classes
 
 
 def index(request):

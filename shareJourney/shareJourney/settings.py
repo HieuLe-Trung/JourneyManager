@@ -66,7 +66,7 @@ cloudinary.config(
     cloud_name="djkg7qktn",
     api_key="761645745792171",
     api_secret="8L4nP4-nW_5boss5jgFfXX9iFUc",
-    api_proxy="http://proxy.server:3128"
+    # api_proxy="http://proxy.server:3128"
 )
 TEMPLATES = [
     {

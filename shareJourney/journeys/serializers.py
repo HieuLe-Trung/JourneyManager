@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from .models import User, Journey
+from .models import User, Journey, Image, Post
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -37,3 +37,20 @@ class JourneySerializer(serializers.ModelSerializer):
         fields = ['user_create', 'name_journey', 'start_location', 'end_location', 'departure_time', 'distance',
                   'estimated_time']
         read_only_fields = ['distance', 'estimated_time']
+
+
+class ImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Image
+        fields = ['id', 'image']
+
+
+class PostSerializer(serializers.ModelSerializer):
+    images = ImageSerializer(many=True,required=False)
+    user = UserSerializer(read_only=True)
+    journey = JourneySerializer
+
+    class Meta:
+        model = Post
+        fields = ['id','journey','user','content', 'visit_point', 'images']
+
