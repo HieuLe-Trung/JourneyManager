@@ -12,9 +12,11 @@ class BaseModel(models.Model):
 
 
 class User(AbstractUser):
-    avatar = models.ImageField(upload_to="avatarJourney", null=True)
+    # avatar = models.ImageField(upload_to="avatarJourney", null=True)
     is_active = models.BooleanField(default=True)  # admin khóa tài khoản
-    # avatar = CloudinaryField(folder="avatarJourney", null=True)
+    avatar = CloudinaryField(folder="avatarJourney", null=False, blank=False,default='')
+    phone = models.CharField(max_length=10, unique=True, null=True)
+    email = models.EmailField(max_length=50, unique=True)
 
 
 class Journey(BaseModel):
@@ -24,7 +26,9 @@ class Journey(BaseModel):
     end_location = models.CharField(max_length=100)
     departure_time = models.DateTimeField(null=True, blank=True)  # thời gian khởi hành
     active = models.BooleanField(default=True)
-    #thêm trường tính time kết thúc
+    distance = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    estimated_time = models.DurationField(blank=True, null=True)
+
     def __str__(self):
         return self.name_journey
 
@@ -49,19 +53,20 @@ class VisitPoint(models.Model):
 
 class Participation(Interaction):  # ds user tham gia hành trình
     joined_at = models.DateTimeField(auto_now_add=True)
-    is_approved = models.BooleanField(default=False)  # xác nhận người tham gia hành trình
+    is_approved = models.BooleanField(default=True)  # xác nhận người tham gia hành trình
     rating = models.IntegerField(null=True, blank=True)
+    current_location = models.CharField(max_length=100, null=True)
 
 
 class Post(Interaction):
     content = models.TextField()
     lock_cmt = models.BooleanField(default=False)  # đóng khi đã đủ người tham gia
     visit_point = models.OneToOneField(VisitPoint, related_name='post', on_delete=models.CASCADE, null=True, blank=True)
-    images = models.ManyToManyField('Image', related_name='posts')
 
 
 class Image(models.Model):
-    image = models.ImageField(upload_to="PostJourney", null=True, blank=True)
+    image = CloudinaryField(folder="PostJourney", null=True, blank=True)
+    post = models.ForeignKey(Post, related_name='images', on_delete=models.CASCADE, default=None)
 
 
 class InteractionPost(BaseModel):
@@ -80,7 +85,6 @@ class Like(InteractionPost):
 class Comment(InteractionPost):
     content = models.TextField()
     is_approved = models.BooleanField(default=False)  # duyệt người tham gia(tick)
-    # khi được duyệt thì true, đưa người dùng đó vào participation và cũng chỉnh approved=True
 
 
 class Report(BaseModel):

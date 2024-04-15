@@ -1,3 +1,4 @@
+from cloudinary.models import CloudinaryResource
 from django.contrib import admin
 from django.utils.html import mark_safe
 
@@ -8,31 +9,46 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ['id', 'username', 'is_active']
     readonly_fields = ['img']
 
-    def img(self, user):
-        if user:
+    # def img(self, user):
+    #     if user:
+    #         return mark_safe(
+    #             '<img src="/static/{url}" width="240" />' \
+    #                 .format(url=user.avatar.name)
+    #         )
+    def img(self, obj):
+        if obj.avatar:
+            if type(obj.avatar) is CloudinaryResource:
+                return mark_safe(
+                    f'<img src="{obj.avatar.url}" height="200" alt="avatar" />'
+                )
             return mark_safe(
-                '<img src="/static/{url}" width="240" />' \
-                    .format(url=user.avatar.name)
+                f'<img src="{obj.avatar.name}" height="200" alt="avatar" />'
             )
-
-
-class PostAdmin(admin.ModelAdmin):
-    list_display = ['id', 'content', 'created_date', 'user']
-    readonly_fields = ['imagePost']
-
-    def imagePost(self, post):  # ĐANG GẶP LỖI HIỂN THỊ ẢNH
-        if post.images.exists():
-            images_html = ''
-            for image in post.images.all():
-                images_html += f'<img src="{image.image.url}" width="100"/>'
-            return mark_safe(images_html)
-        else:
-            return 'No images'
 
 
 class VisitPointInlineAdmin(admin.StackedInline):
     model = VisitPoint
     fk_name = 'journey'
+
+
+class ImageInlineAdmin(admin.StackedInline):
+    model = Image
+    fk_name = 'post'
+
+
+class PostAdmin(admin.ModelAdmin):
+    list_display = ['id', 'content', 'created_date', 'user']
+    inlines = [ImageInlineAdmin, ]
+    # readonly_fields = ['imagePost']
+    #
+    # def imagePost(self, post):  # ĐANG GẶP LỖI HIỂN THỊ ẢNH
+    #     if post.images.exists():
+    #         images_html = ''
+    #         for image in post.images.all():
+    #             images_html += f'<img src="{image.image.url}" width="100"/>'
+    #         return mark_safe(images_html)
+    #     else:
+    #         return 'No images'
 
 
 class ParticipationInlineAdmin(admin.StackedInline):
@@ -50,16 +66,16 @@ class JourneyAdmin(admin.ModelAdmin):
     inlines = [VisitPointInlineAdmin, ParticipationInlineAdmin, ]
 
 
-class ImageAdmin(admin.ModelAdmin):
-    list_display = ['id', 'imgs']
-    readonly_fields = ['imgs']
-
-    def imgs(self, image):  # truyền obj của model
-        if image:
-            return mark_safe(
-                '<img src="/static/{url}" width="100" />' \
-                    .format(url=image.image.name)
-            )
+# class ImageAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'imgs']
+#     readonly_fields = ['imgs']
+#
+#     def imgs(self, image):  # truyền obj của model
+#         if image:
+#             return mark_safe(
+#                 '<img src="/static/{url}" width="100" />' \
+#                     .format(url=image.image.name)
+#             )
 
 
 class JourneyAppAdminSite(admin.AdminSite):
@@ -73,7 +89,7 @@ admin_site = JourneyAppAdminSite(name='myjourney')
 admin_site.register(Journey, JourneyAdmin)
 admin_site.register(User, UserAdmin)
 admin_site.register(VisitPoint)
-admin_site.register(Participation,ParticipationAdmin)
-admin_site.register(Post, PostAdmin)
+admin_site.register(Participation, ParticipationAdmin)
+admin_site.register(Post,PostAdmin)
 admin_site.register(Report)
-admin_site.register(Image, ImageAdmin)
+admin_site.register(Image)

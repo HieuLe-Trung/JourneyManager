@@ -65,7 +65,8 @@ ROOT_URLCONF = 'shareJourney.urls'
 cloudinary.config(
     cloud_name="djkg7qktn",
     api_key="761645745792171",
-    api_secret="8L4nP4-nW_5boss5jgFfXX9iFUc"
+    api_secret="8L4nP4-nW_5boss5jgFfXX9iFUc",
+    api_proxy="http://proxy.server:3128"
 )
 TEMPLATES = [
     {
@@ -92,7 +93,7 @@ WSGI_APPLICATION = 'shareJourney.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'journeysdb',
+        'NAME': 'journeys2db',
         'USER': 'root',
         'PASSWORD': 'Admin@123',
         'HOST': ''
