@@ -10,24 +10,36 @@ from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post
 
 
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):  # post nên dùng create
+class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
     queryset = User.objects.filter(is_active=True).all()
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
 
     def get_permissions(self):
         if self.action.__eq__('current_user'):
-            return [permissions.IsAuthenticated()]
+            return [perms.OwnerPostAuthenticated()]
         return [permissions.AllowAny()]
 
     # lấy thông tin người đang đăng nhập để hiển thị profile
-    @action(methods=['get'], url_name='current_user', detail=False)
+    @action(methods=['get','patch','delete'], url_name='current_user', detail=False)
     def current_user(self, request):
+        if request.method == 'PATCH':
+            user = request.user
+            serializer = self.get_serializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif request.method == 'DELETE':
+            user = request.user
+            user.is_active = False
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(serializers.UserSerializer(request.user).data)
 
 
 class JourneyViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView, generics.CreateAPIView):
-    queryset = Journey.objects.all()
+    queryset = Journey.objects.filter(active=True).all()
     serializer_class = serializers.JourneySerializer
     permission_classes = [perms.OwnerAuthenticated]
 
@@ -36,7 +48,7 @@ class JourneyViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyA
 
 
 class JourneyGetViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
-    queryset = Journey.objects.all()
+    queryset = Journey.objects.filter(active=True).all()
     serializer_class = serializers.JourneySerializer
     pagination_class = paginators.JourneyPaginator
 
@@ -50,12 +62,13 @@ class JourneyGetViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retriev
         return queries
 
 
-class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView, generics.CreateAPIView):
+class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
+                  generics.CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = serializers.PostSerializer
     permission_classes = [permissions.AllowAny()]
 
-    def perform_create(self, serializer):  #user đăng bài
+    def perform_create(self, serializer):  # user đăng bài
         serializer.save(user=self.request.user)
 
     def get_permissions(self):
