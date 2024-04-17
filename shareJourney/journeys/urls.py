@@ -4,7 +4,6 @@ from . import views
 
 router = DefaultRouter()
 router.register('journey',views.JourneyViewSet,basename='journey')
-router.register('get_journey',views.JourneyGetViewSet,basename='get_journey')
 router.register('post',views.PostViewSet,basename='post')
 router.register('user',views.UserViewSet)
 urlpatterns = [

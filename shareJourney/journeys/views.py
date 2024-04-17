@@ -21,7 +21,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
         return [permissions.AllowAny()]
 
     # lấy thông tin người đang đăng nhập để hiển thị profile
-    @action(methods=['get','patch','delete'], url_name='current_user', detail=False)
+    @action(methods=['get', 'patch', 'delete'], url_name='current_user', detail=False)
     def current_user(self, request):
         if request.method == 'PATCH':
             user = request.user
@@ -38,19 +38,22 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
         return Response(serializers.UserSerializer(request.user).data)
 
 
-class JourneyViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView, generics.CreateAPIView):
+class JourneyViewSet(viewsets.ModelViewSet):
     queryset = Journey.objects.filter(active=True).all()
     serializer_class = serializers.JourneySerializer
-    permission_classes = [perms.OwnerAuthenticated]
+    pagination_class = paginators.JourneyPaginator
+    permission_classes = [permissions.AllowAny()]
 
     def perform_create(self, serializer):  # khi gọi api create sẽ lấy user đang đăng nhập gán vào
         serializer.save(user_create=self.request.user)
 
-
-class JourneyGetViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
-    queryset = Journey.objects.filter(active=True).all()
-    serializer_class = serializers.JourneySerializer
-    pagination_class = paginators.JourneyPaginator
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.IsAuthenticated()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            return [perms.OwnerAuthenticated()]
+        else:
+            return [permissions.AllowAny()]
 
     def get_queryset(self):
         queries = self.queryset
