@@ -50,18 +50,21 @@ class JourneyGetViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retriev
         return queries
 
 
-# class PostViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView, generics.CreateAPIView):
-#     queryset = Post.objects.all()
-#     serializer_class = serializers.PostSerializer
-#     permission_classes = [permissions.AllowAny]
-#
-#     def perform_create(self, serializer):  # khi gọi api create sẽ lấy user đang đăng nhập gán vào
-#         serializer.save(user=self.request.user)
-#
-#     def get_permissions(self):
-#         if self.action in []:
-#             return [permissions.IsAuthenticated()]
-#         return self.permission_classes
+class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView, generics.CreateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = serializers.PostSerializer
+    permission_classes = [permissions.AllowAny()]
+
+    def perform_create(self, serializer):  #user đăng bài
+        serializer.save(user=self.request.user)
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.IsAuthenticated()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            return [perms.OwnerPostAuthenticated()]
+        else:
+            return [permissions.AllowAny()]
 
 
 def index(request):

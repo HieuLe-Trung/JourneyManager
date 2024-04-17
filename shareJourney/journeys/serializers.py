@@ -44,13 +44,17 @@ class ImageSerializer(serializers.ModelSerializer):
         model = Image
         fields = ['id', 'image']
 
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['image'] = instance.image.url
+        return rep
+
 
 class PostSerializer(serializers.ModelSerializer):
-    images = ImageSerializer(many=True,required=False)
+    images = ImageSerializer(many=True)
     user = UserSerializer(read_only=True)
     journey = JourneySerializer
 
     class Meta:
         model = Post
-        fields = ['id','journey','user','content', 'visit_point', 'images']
-
+        fields = ['id', 'journey', 'user', 'content', 'visit_point', 'images']
