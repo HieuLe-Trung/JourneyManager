@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import User, Journey, Image, Post
+from .models import User, Journey, Image, Post, Comment
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'username', 'phone', 'email','password',
+        fields = ['id', 'first_name', 'last_name', 'username', 'phone', 'email', 'password',
                   'avatar']  # những trường user POST lên khi đăng ký
         read_only_fields = ['id']
         extra_kwargs = {
@@ -73,3 +73,11 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id', 'journey', 'user', 'content', 'visit_point', 'images']
+
+
+class CommentSerializers(serializers.ModelSerializer):
+    user = UserSerializer
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'user']

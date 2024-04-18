@@ -2,7 +2,7 @@ from cloudinary.models import CloudinaryResource
 from django.contrib import admin
 from django.utils.html import mark_safe
 
-from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report, Image
+from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report, Image, LikePost
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -77,6 +77,9 @@ class JourneyAdmin(admin.ModelAdmin):
 #                     .format(url=image.image.name)
 #             )
 
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'content', 'created_date']
+
 
 class JourneyAppAdminSite(admin.AdminSite):
     site_title = 'Trang quản trị của tôi'
@@ -91,5 +94,7 @@ admin_site.register(User, UserAdmin)
 admin_site.register(VisitPoint)
 admin_site.register(Participation, ParticipationAdmin)
 admin_site.register(Post,PostAdmin)
+admin_site.register(Comment,CommentAdmin)
+admin_site.register(LikePost)
 admin_site.register(Report)
 admin_site.register(Image)

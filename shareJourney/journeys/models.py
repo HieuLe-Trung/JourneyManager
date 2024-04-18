@@ -14,7 +14,7 @@ class BaseModel(models.Model):
 class User(AbstractUser):
     # avatar = models.ImageField(upload_to="avatarJourney", null=True)
     is_active = models.BooleanField(default=True)  # admin khóa tài khoản
-    avatar = CloudinaryField(folder="avatarJourney", null=False, blank=False,default='')
+    avatar = CloudinaryField(folder="avatarJourney", null=False, blank=False, default='')
     phone = models.CharField(max_length=10, unique=True, null=True)
     email = models.EmailField(max_length=50, unique=True)
 
@@ -77,14 +77,22 @@ class InteractionPost(BaseModel):
         abstract = True
 
 
-class Like(InteractionPost):
+class LikeJourney(Interaction):
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ("journey", "user")
+
+
+class LikePost(InteractionPost):
+    active = models.BooleanField(default=True)
+
     class Meta:
         unique_together = ("post", "user")
 
 
 class Comment(InteractionPost):
     content = models.TextField()
-    is_approved = models.BooleanField(default=False)  # duyệt người tham gia(tick)
 
 
 class Report(BaseModel):

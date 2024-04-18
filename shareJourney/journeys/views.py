@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from journeys import serializers, perms, paginators
-from journeys.models import User, Journey, Post
+from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
@@ -75,12 +75,27 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         serializer.save(user=self.request.user)
 
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action in ['create', 'add_comment','like']:
             return [permissions.IsAuthenticated()]
         elif self.action in ['update', 'partial_update', 'destroy']:
             return [perms.OwnerPostAuthenticated()]
         else:
             return [permissions.AllowAny()]
+
+    @action(methods=['post'], url_name='add_comment', detail=True)
+    def add_comment(self, request, pk):
+        c = Comment.objects.create(user=request.user,
+                                   post=self.get_object(),
+                                   content=request.data.get('content'))
+        return Response(serializers.CommentSerializers(c).data, status=status.HTTP_201_CREATED)
+
+    @action(methods=['post'], url_name='like', detail=True)
+    def like(self, request, pk):
+        like, created = LikePost.objects.get_or_create(user=request.user, post=self.get_object())
+        if not created:
+            like.active = not like.active
+            like.save()
+        return Response(status=status.HTTP_200_OK)
 
 
 def index(request):
