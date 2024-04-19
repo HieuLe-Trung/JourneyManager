@@ -1,11 +1,8 @@
-from django.db.models import Q
-from django.shortcuts import render
 from oauth2_provider.contrib.rest_framework import permissions
 from rest_framework import viewsets, generics, parsers, status, permissions
 from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney
 
@@ -64,6 +61,14 @@ class JourneyViewSet(viewsets.ModelViewSet):
 
         return queries
 
+    @action(methods=['post'], url_name='like', detail=True)
+    def like(self, request, pk):
+        like, created = LikeJourney.objects.get_or_create(user=request.user, journey=self.get_object())
+        if not created:
+            like.active = not like.active
+            like.save()
+        return Response(status=status.HTTP_200_OK)
+
 
 class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
                   generics.CreateAPIView):
@@ -75,7 +80,7 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         serializer.save(user=self.request.user)
 
     def get_permissions(self):
-        if self.action in ['create', 'add_comment','like']:
+        if self.action in ['create', 'add_comment', 'like']:
             return [permissions.IsAuthenticated()]
         elif self.action in ['update', 'partial_update', 'destroy']:
             return [perms.OwnerPostAuthenticated()]
@@ -87,7 +92,32 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         c = Comment.objects.create(user=request.user,
                                    post=self.get_object(),
                                    content=request.data.get('content'))
-        return Response(serializers.CommentSerializers(c).data, status=status.HTTP_201_CREATED)
+        return Response(serializers.CommentDetailSerializers(c).data, status=status.HTTP_201_CREATED)
+
+    @action(methods=['delete'], url_path=r'delete_comment/(?P<comment_pk>\d+)', url_name='delete_comment', detail=True)
+    def delete_comment(self, request, pk, comment_pk):
+        post = self.get_object()
+        comment = Comment.objects.get(pk=comment_pk, post=post)
+        if comment.user == request.user:
+            comment.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'error': 'Bạn không có quyền xóa comment này.'}, status=status.HTTP_403_FORBIDDEN)
+
+    @action(methods=['patch'], url_path=r'update_comment/(?P<comment_pk>\d+)', url_name='update_comment', detail=True)
+    def update_comment(self, request, pk, comment_pk):
+        post = self.get_object()
+        comment = Comment.objects.get(pk=comment_pk, post=post)
+        serializer = serializers.CommentSerializers(comment,
+                                                    data=request.data)  # update ko dùng detail, nó yêu cầu user
+        if comment.user == request.user:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'You do not have permission to perform this action.'},
+                            status=status.HTTP_403_FORBIDDEN)
 
     @action(methods=['post'], url_name='like', detail=True)
     def like(self, request, pk):

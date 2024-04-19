@@ -1,8 +1,7 @@
 from cloudinary.models import CloudinaryResource
 from django.contrib import admin
 from django.utils.html import mark_safe
-
-from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report, Image, LikePost
+from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report, Image
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -95,6 +94,5 @@ admin_site.register(VisitPoint)
 admin_site.register(Participation, ParticipationAdmin)
 admin_site.register(Post,PostAdmin)
 admin_site.register(Comment,CommentAdmin)
-admin_site.register(LikePost)
 admin_site.register(Report)
 admin_site.register(Image)

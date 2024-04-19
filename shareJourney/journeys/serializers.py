@@ -49,7 +49,7 @@ class JourneySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Journey
-        fields = ['user_create', 'name_journey', 'start_location', 'end_location', 'departure_time', 'distance',
+        fields = ['user_create', 'id', 'name_journey', 'start_location', 'end_location', 'departure_time', 'distance',
                   'estimated_time']
         read_only_fields = ['distance', 'estimated_time']
 
@@ -76,8 +76,14 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['id', 'content']
+
+
+class CommentDetailSerializers(serializers.ModelSerializer):
     user = UserSerializer
 
     class Meta:
         model = Comment
-        fields = ['id', 'content', 'user']
+        fields = ['id', 'content','user']
