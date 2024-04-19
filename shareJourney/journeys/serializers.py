@@ -72,10 +72,11 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'journey', 'user', 'content', 'visit_point', 'images']
+        fields = ['id', 'journey', 'user', 'content', 'visit_point','created_date', 'images']
+        read_only_fields = ['created_date']
 
 
-class CommentSerializers(serializers.ModelSerializer):
+class CommentSerializers(serializers.ModelSerializer): # update ko dùng detail, nó yêu cầu user
     class Meta:
         model = Comment
         fields = ['id', 'content']
@@ -86,4 +87,4 @@ class CommentDetailSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'content','user']
+        fields = ['id', 'content', 'user', 'created_date']

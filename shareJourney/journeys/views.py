@@ -128,5 +128,13 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         return Response(status=status.HTTP_200_OK)
 
 
+class CommentListAPIView(generics.ListAPIView):
+    serializer_class = serializers.CommentDetailSerializers
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        return Comment.objects.filter(post_id=post_id)
+
+
 def index(request):
     return HttpResponse("Share Journey App")
