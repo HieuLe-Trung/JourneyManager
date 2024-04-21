@@ -69,6 +69,12 @@ class JourneyViewSet(viewsets.ModelViewSet):
             like.save()
         return Response(status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['get'])
+    def likes_count(self, request, pk=None):
+        journey = self.get_object()
+        likes_count = LikeJourney.objects.filter(journey=journey, active=True).count()
+        return Response({'journey_id': pk, 'likes_count': likes_count})
+
 
 class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
                   generics.CreateAPIView):
@@ -82,7 +88,7 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
     def get_permissions(self):
         if self.action in ['create', 'add_comment', 'like']:
             return [permissions.IsAuthenticated()]
-        elif self.action in ['update', 'partial_update', 'destroy']:
+        elif self.action in ['update', 'partial_update', 'destroy', 'lock_comment']:
             return [perms.OwnerPostAuthenticated()]
         else:
             return [permissions.AllowAny()]
@@ -125,6 +131,19 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         if not created:
             like.active = not like.active
             like.save()
+        return Response(status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'])
+    def likes_count(self, request, pk=None):
+        post = self.get_object()
+        likes_count = LikePost.objects.filter(post=post, active=True).count()
+        return Response({'post_id': pk, 'likes_count': likes_count})
+
+    @action(methods=['post'], url_name='lock_comment', detail=True)
+    def lock_comment(self, request, pk):
+        post = self.get_object()
+        post.lock_cmt = True
+        post.save()
         return Response(status=status.HTTP_200_OK)
 
 
