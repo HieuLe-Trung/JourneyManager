@@ -37,7 +37,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
 
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = Journey.objects.filter(active=True).all()
-    serializer_class = serializers.JourneySerializer
+    serializer_class = serializers.JourneyDetailSerializers
     pagination_class = paginators.JourneyPaginator
     permission_classes = [permissions.AllowAny()]
 
@@ -79,7 +79,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
 class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
                   generics.CreateAPIView):
     queryset = Post.objects.all()
-    serializer_class = serializers.PostSerializer
+    serializer_class = serializers.PostDetailSerializer
     permission_classes = [permissions.AllowAny()]
 
     def perform_create(self, serializer):  # user đăng bài

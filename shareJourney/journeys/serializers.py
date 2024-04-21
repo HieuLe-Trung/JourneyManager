@@ -49,9 +49,20 @@ class JourneySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Journey
-        fields = ['user_create', 'id', 'name_journey', 'start_location', 'end_location', 'departure_time', 'distance',
-                  'estimated_time']
-        read_only_fields = ['distance', 'estimated_time']
+        fields = ['user_create', 'id', 'name_journey', 'start_location', 'end_location', 'departure_time']
+
+
+class JourneyDetailSerializers(JourneySerializer):
+    liked = serializers.SerializerMethodField()
+
+    def get_liked(self, journey):
+        request = self.context.get('request')
+        if request.user.is_authenticated:
+            return journey.likejourney_set.filter(active=True).exists()
+
+    class Meta:
+        model = JourneySerializer.Meta.model
+        fields = JourneySerializer.Meta.fields + ['distance', 'estimated_time', 'liked']
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -66,17 +77,30 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    images = ImageSerializer(many=True)
+    images = ImageSerializer(many=True,required=False)
     user = UserSerializer(read_only=True)
     journey = JourneySerializer
 
     class Meta:
         model = Post
-        fields = ['id', 'journey', 'user', 'content', 'visit_point','created_date', 'images']
+        fields = ['id', 'journey', 'user', 'content', 'visit_point', 'created_date', 'images']
         read_only_fields = ['created_date']
 
 
-class CommentSerializers(serializers.ModelSerializer): # update ko dùng detail, nó yêu cầu user
+class PostDetailSerializer(PostSerializer):
+    liked = serializers.SerializerMethodField()
+
+    def get_liked(self, post):
+        request = self.context.get('request')
+        if request.user.is_authenticated:
+            return post.likepost_set.filter(active=True).exists()
+
+    class Meta:
+        model = PostSerializer.Meta.model
+        fields = PostSerializer.Meta.fields + ['liked']
+
+
+class CommentSerializers(serializers.ModelSerializer):  # update ko dùng detail, nó yêu cầu user
     class Meta:
         model = Comment
         fields = ['id', 'content']
