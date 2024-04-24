@@ -99,3 +99,17 @@ class Report(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     reporter = models.ForeignKey(User, related_name='reports_given', on_delete=models.CASCADE)
     reason = models.TextField()
+
+
+class Notification(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # gửi thông báo về cho ai
+    post = models.ForeignKey(Post, on_delete=models.CASCADE,null=True, blank=True)
+    journey = models.ForeignKey(Journey, on_delete=models.CASCADE, null=True, blank=True)
+    message = models.CharField(max_length=255)
+    read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_date']
+
+    def __str__(self):
+        return self.message

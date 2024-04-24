@@ -93,7 +93,7 @@ WSGI_APPLICATION = 'shareJourney.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'journeys2db',
+        'NAME': 'journeys3db',
         'USER': 'root',
         'PASSWORD': 'Admin@123',
         'HOST': ''

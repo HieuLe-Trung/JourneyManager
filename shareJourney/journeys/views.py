@@ -4,7 +4,8 @@ from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from journeys import serializers, perms, paginators
-from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney
+from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification
+from journeys.serializers import NotificationSerializer, PostSerializer
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
@@ -61,13 +62,31 @@ class JourneyViewSet(viewsets.ModelViewSet):
 
         return queries
 
+    @action(detail=True, methods=['get'])
+    def posts(self, request, pk=None):
+        journey = self.get_object()
+        posts = Post.objects.filter(journey=journey)
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
+
     @action(methods=['post'], url_name='like', detail=True)
     def like(self, request, pk):
+        journey = self.get_object()
+        user = request.user
         like, created = LikeJourney.objects.get_or_create(user=request.user, journey=self.get_object())
         if not created:
             like.active = not like.active
             like.save()
+        if created and like.active:
+            self.create_notification(journey, user)
         return Response(status=status.HTTP_200_OK)
+
+    def create_notification(self, journey, user):
+        Notification.objects.create(
+            user=journey.user_create,
+            journey=journey,
+            message=f"{user.last_name} đã thích hành trình của bạn."
+        )
 
     @action(detail=True, methods=['get'])
     def likes_count(self, request, pk=None):
@@ -98,7 +117,17 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         c = Comment.objects.create(user=request.user,
                                    post=self.get_object(),
                                    content=request.data.get('content'))
+        self.create_notificationCmt(c)
         return Response(serializers.CommentDetailSerializers(c).data, status=status.HTTP_201_CREATED)
+
+    def create_notificationCmt(self, comment):
+        post = comment.post
+        user = comment.user
+        Notification.objects.create(
+            user=post.user,
+            post=post,
+            message=f"{user.last_name} đã bình luận trên bài viết của bạn."
+        )
 
     @action(methods=['delete'], url_path=r'delete_comment/(?P<comment_pk>\d+)', url_name='delete_comment', detail=True)
     def delete_comment(self, request, pk, comment_pk):
@@ -127,11 +156,22 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
 
     @action(methods=['post'], url_name='like', detail=True)
     def like(self, request, pk):
-        like, created = LikePost.objects.get_or_create(user=request.user, post=self.get_object())
+        post = self.get_object()
+        user = request.user
+        like, created = LikePost.objects.get_or_create(user=request.user, post=post)
         if not created:
             like.active = not like.active
             like.save()
+        if created and like.active:
+            self.create_notification(post, user)
         return Response(status=status.HTTP_200_OK)
+
+    def create_notification(self, post, user):
+        Notification.objects.create(
+            user=post.user,
+            post=post,
+            message=f"{user.last_name} đã thích bài viết của bạn."
+        )
 
     @action(detail=True, methods=['get'])
     def likes_count(self, request, pk=None):
