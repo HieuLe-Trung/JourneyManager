@@ -187,6 +187,37 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         return Response(status=status.HTTP_200_OK)
 
 
+class NotificationViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        user = request.user
+        notifications = Notification.objects.filter(user=user)
+        serializer = self.serializer_class(notifications, many=True)
+        return Response(serializer.data)
+
+    @action(methods=['get'], detail=True, url_path='redirect')
+    def redirect_to_object(self, request, pk=None):  # khi ấn vào 1 thông báo bất kỳ
+        notification = self.get_object()
+        if notification.post:
+            return Response({'post_id': notification.post_id}, status=status.HTTP_200_OK)
+        elif notification.journey:
+            return Response({'journey_id': notification.journey_id}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Notification does not point to any object'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # sau khi ấn vào 1 thông báo để xem chi tiết thì trả về id của thông báo đó để cập nhật đã xem và
+    # trả về id của post/journey để hiển thị nó
+    @action(methods=['post'], detail=True, url_path='mark_as_read')
+    def mark_as_read(self, request, pk=None):  # lấy post_id khi ấn vào xem 1 thông báo sẽ trả về post_id
+        notification = self.get_object()
+        notification.read = True
+        notification.save()
+        return Response({'message': 'Notification marked as read'}, status=status.HTTP_200_OK)
+
+
 class CommentListAPIView(generics.ListAPIView):
     serializer_class = serializers.CommentDetailSerializers
 
