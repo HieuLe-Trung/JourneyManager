@@ -52,8 +52,8 @@ class VisitPoint(models.Model):
 
 
 class Participation(Interaction):  # ds user tham gia hành trình
-    joined_at = models.DateTimeField(auto_now_add=True)
-    is_approved = models.BooleanField(default=True)  # xác nhận người tham gia hành trình
+    joined_at = models.DateTimeField(null=True, blank=True)
+    is_approved = models.BooleanField(default=False)  # xác nhận người tham gia hành trình
     rating = models.IntegerField(null=True, blank=True)
     current_location = models.CharField(max_length=100, null=True)
 
@@ -105,6 +105,7 @@ class Notification(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # gửi thông báo về cho ai
     post = models.ForeignKey(Post, on_delete=models.CASCADE,null=True, blank=True)
     journey = models.ForeignKey(Journey, on_delete=models.CASCADE, null=True, blank=True)
+    participation = models.ForeignKey(Participation, on_delete=models.CASCADE, null=True, blank=True)
     message = models.CharField(max_length=255)
     read = models.BooleanField(default=False)
 

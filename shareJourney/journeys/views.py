@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from journeys import serializers, perms, paginators
-from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification
+from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation
 from journeys.serializers import NotificationSerializer, PostSerializer
 
 
@@ -46,7 +46,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
         serializer.save(user_create=self.request.user)
 
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action in ['create', 'register_participation']:
             return [permissions.IsAuthenticated()]
         elif self.action in ['update', 'partial_update', 'destroy']:
             return [perms.OwnerAuthenticated()]
@@ -93,6 +93,19 @@ class JourneyViewSet(viewsets.ModelViewSet):
         journey = self.get_object()
         likes_count = LikeJourney.objects.filter(journey=journey, active=True).count()
         return Response({'journey_id': pk, 'likes_count': likes_count})
+
+    # đăng ký tham gia hành trình
+    @action(detail=True, methods=['post'], url_path='register')
+    def register_participation(self, request, pk=None):
+        journey = self.get_object()
+        user = request.user
+        participation = Participation.objects.create(user=user, journey=journey)
+        self.create_notificationRegister(journey.user_create, participation)
+        return Response({"message": "Yêu cầu tham gia đã được gửi."}, status=status.HTTP_201_CREATED)
+
+    def create_notificationRegister(self, user, participation):
+        notification_message = f"{participation.user.last_name} đã đăng ký tham gia hành trình của bạn."
+        Notification.objects.create(user=user, message=notification_message, participation=participation)
 
 
 class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
