@@ -107,11 +107,11 @@ class CommentSerializers(serializers.ModelSerializer):  # update ko dùng detail
 
 
 class CommentDetailSerializers(serializers.ModelSerializer):
-    user = UserSerializer
+    user = UserSerializer()
 
     class Meta:
         model = Comment
-        fields = ['id', 'content', 'user', 'created_date']
+        fields = ['user','id', 'content', 'created_date']
 
 
 class NotificationSerializer(serializers.ModelSerializer):

@@ -22,6 +22,7 @@ class User(AbstractUser):
 class Journey(BaseModel):
     user_create = models.ForeignKey(User, on_delete=models.CASCADE)  # người tạo hành trình
     name_journey = models.CharField(max_length=100, blank=False, null=False, default='')
+    background = models.CharField(max_length=255, blank=True, null=True)
     start_location = models.CharField(max_length=100)
     end_location = models.CharField(max_length=100)
     departure_time = models.DateTimeField(null=True, blank=True)  # thời gian khởi hành
