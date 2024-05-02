@@ -49,7 +49,7 @@ class JourneySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Journey
-        fields = ['user_create', 'id', 'name_journey', 'start_location', 'end_location', 'departure_time']
+        fields = ['user_create', 'id', 'name_journey', 'background', 'start_location', 'end_location', 'departure_time']
 
 
 class JourneyDetailSerializers(JourneySerializer):
@@ -86,6 +86,13 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ['id', 'journey', 'user', 'content', 'visit_point', 'created_date', 'images']
         read_only_fields = ['created_date']
 
+    def create(self, validated_data):
+        images_data = self.context.get('request').FILES.getlist('images')
+        post = Post.objects.create(**validated_data)
+        for image_data in images_data:
+            Image.objects.create(post=post, image=image_data)
+        return post
+
 
 class PostDetailSerializer(PostSerializer):
     liked = serializers.SerializerMethodField()
@@ -111,7 +118,7 @@ class CommentDetailSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['user','id', 'content', 'created_date']
+        fields = ['user', 'id', 'content', 'created_date']
 
 
 class NotificationSerializer(serializers.ModelSerializer):
