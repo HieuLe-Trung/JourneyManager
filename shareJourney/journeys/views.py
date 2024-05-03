@@ -4,7 +4,8 @@ from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from journeys import serializers, perms, paginators
-from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation
+from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
+    CommentJourney
 from journeys.serializers import NotificationSerializer, PostSerializer
 
 
@@ -46,9 +47,9 @@ class JourneyViewSet(viewsets.ModelViewSet):
         serializer.save(user_create=self.request.user)
 
     def get_permissions(self):
-        if self.action in ['create', 'register_participation']:
+        if self.action in ['create', 'add_comment']:
             return [permissions.IsAuthenticated()]
-        elif self.action in ['update', 'partial_update', 'destroy']:
+        elif self.action in ['update', 'partial_update', 'destroy', 'lock_comment']:
             return [perms.OwnerAuthenticated()]
         else:
             return [permissions.AllowAny()]
@@ -94,18 +95,54 @@ class JourneyViewSet(viewsets.ModelViewSet):
         likes_count = LikeJourney.objects.filter(journey=journey, active=True).count()
         return Response({'journey_id': pk, 'likes_count': likes_count})
 
-    # đăng ký tham gia hành trình
-    @action(detail=True, methods=['post'], url_path='register')
-    def register_participation(self, request, pk=None):
-        journey = self.get_object()
-        user = request.user
-        participation = Participation.objects.create(user=user, journey=journey)
-        self.create_notificationRegister(journey.user_create, participation)
-        return Response({"message": "Yêu cầu tham gia đã được gửi."}, status=status.HTTP_201_CREATED)
+    @action(methods=['post'], url_name='add_comment', detail=True)
+    def add_comment(self, request, pk):
+        c = CommentJourney.objects.create(user=request.user,
+                                          journey=self.get_object(),
+                                          content=request.data.get('content'))
+        self.create_notificationCmt(c)
+        return Response(serializers.CommentJourneyDetailSerializers(c).data, status=status.HTTP_201_CREATED)
 
-    def create_notificationRegister(self, user, participation):
-        notification_message = f"{participation.user.last_name} đã đăng ký tham gia hành trình của bạn."
-        Notification.objects.create(user=user, message=notification_message, participation=participation)
+    def create_notificationCmt(self, commentJourney):
+        journey = commentJourney.journey
+        user = commentJourney.user
+        Notification.objects.create(
+            user=journey.user_create,
+            journey=journey,
+            message=f"{user.last_name} đã bình luận trên hành trình của bạn."
+        )
+
+    @action(methods=['delete'], url_path=r'delete_comment/(?P<comment_pk>\d+)', url_name='delete_comment', detail=True)
+    def delete_comment(self, request, pk, comment_pk):
+        journey = self.get_object()
+        comment = CommentJourney.objects.get(pk=comment_pk, journey=journey)
+        if comment.user == request.user:
+            comment.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'error': 'Bạn không có quyền xóa comment này.'}, status=status.HTTP_403_FORBIDDEN)
+
+    @action(methods=['patch'], url_path=r'update_comment/(?P<comment_pk>\d+)', url_name='update_comment', detail=True)
+    def update_comment(self, request, pk, comment_pk):
+        journey = self.get_object()
+        comment = CommentJourney.objects.get(pk=comment_pk, journey=journey)
+        serializer = serializers.CommentJourneySerializers(comment,
+                                                    data=request.data)  # update ko dùng detail, nó yêu cầu user
+        if comment.user == request.user:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'You do not have permission to perform this action.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+    @action(methods=['post'], url_name='lock_comment', detail=True)
+    def lock_comment(self, request, pk):
+        journey = self.get_object()
+        journey.lock_cmt = True
+        journey.save()
+        return Response({'lock_cmt': journey.lock_cmt}, status=status.HTTP_200_OK)
 
 
 class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
@@ -120,7 +157,7 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
     def get_permissions(self):
         if self.action in ['create', 'add_comment', 'like']:
             return [permissions.IsAuthenticated()]
-        elif self.action in ['update', 'partial_update', 'destroy', 'lock_comment']:
+        elif self.action in ['update', 'partial_update', 'destroy']:
             return [perms.OwnerPostAuthenticated()]
         else:
             return [permissions.AllowAny()]
@@ -191,13 +228,6 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         post = self.get_object()
         likes_count = LikePost.objects.filter(post=post, active=True).count()
         return Response({'post_id': pk, 'likes_count': likes_count})
-
-    @action(methods=['post'], url_name='lock_comment', detail=True)
-    def lock_comment(self, request, pk):
-        post = self.get_object()
-        post.lock_cmt = True
-        post.save()
-        return Response(status=status.HTTP_200_OK)
 
 
 class NotificationViewSet(viewsets.ViewSet, generics.RetrieveAPIView):

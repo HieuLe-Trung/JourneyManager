@@ -23,9 +23,11 @@ class Journey(BaseModel):
     user_create = models.ForeignKey(User, on_delete=models.CASCADE)  # người tạo hành trình
     name_journey = models.CharField(max_length=100, blank=False, null=False, default='')
     background = models.CharField(max_length=255, blank=True, null=True)
+    lock_cmt = models.BooleanField(default=False)  # đóng khi đã đủ người tham gia
     start_location = models.CharField(max_length=100)
     end_location = models.CharField(max_length=100)
-    departure_time = models.DateTimeField(null=True, blank=True)  # thời gian khởi hành
+    # departure_time = models.DateTimeField(null=True, blank=True)  # thời gian khởi hành
+    departure_time = models.CharField(max_length=100, blank=True, null=True)
     active = models.BooleanField(default=True)
     distance = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     estimated_time = models.DurationField(blank=True, null=True)
@@ -61,7 +63,6 @@ class Participation(Interaction):  # ds user tham gia hành trình
 
 class Post(Interaction):
     content = models.TextField()
-    lock_cmt = models.BooleanField(default=False)  # đóng khi đã đủ người tham gia
     visit_point = models.OneToOneField(VisitPoint, related_name='post', on_delete=models.CASCADE, null=True, blank=True)
 
 
@@ -92,6 +93,10 @@ class LikePost(InteractionPost):
         unique_together = ("post", "user")
 
 
+class CommentJourney(Interaction):
+    content = models.TextField()
+
+
 class Comment(InteractionPost):
     content = models.TextField()
 
@@ -104,9 +109,8 @@ class Report(BaseModel):
 
 class Notification(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # gửi thông báo về cho ai
-    post = models.ForeignKey(Post, on_delete=models.CASCADE,null=True, blank=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
     journey = models.ForeignKey(Journey, on_delete=models.CASCADE, null=True, blank=True)
-    participation = models.ForeignKey(Participation, on_delete=models.CASCADE, null=True, blank=True)
     message = models.CharField(max_length=255)
     read = models.BooleanField(default=False)
 

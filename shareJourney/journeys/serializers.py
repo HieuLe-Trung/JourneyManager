@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import User, Journey, Image, Post, Comment, Notification
+from .models import User, Journey, Image, Post, Comment, Notification, CommentJourney
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -118,6 +118,20 @@ class CommentDetailSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
+        fields = ['user', 'id', 'content', 'created_date']
+
+
+class CommentJourneySerializers(serializers.ModelSerializer):
+    class Meta:
+        model = CommentJourney
+        fields = ['id', 'content']
+
+
+class CommentJourneyDetailSerializers(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = CommentJourney
         fields = ['user', 'id', 'content', 'created_date']
 
 

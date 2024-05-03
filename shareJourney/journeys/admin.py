@@ -1,7 +1,7 @@
 from cloudinary.models import CloudinaryResource
 from django.contrib import admin
 from django.utils.html import mark_safe
-from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report, Image
+from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report, Image, CommentJourney
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -38,16 +38,6 @@ class ImageInlineAdmin(admin.StackedInline):
 class PostAdmin(admin.ModelAdmin):
     list_display = ['id', 'content', 'created_date', 'user']
     inlines = [ImageInlineAdmin, ]
-    # readonly_fields = ['imagePost']
-    #
-    # def imagePost(self, post):  # ĐANG GẶP LỖI HIỂN THỊ ẢNH
-    #     if post.images.exists():
-    #         images_html = ''
-    #         for image in post.images.all():
-    #             images_html += f'<img src="{image.image.url}" width="100"/>'
-    #         return mark_safe(images_html)
-    #     else:
-    #         return 'No images'
 
 
 class ParticipationInlineAdmin(admin.StackedInline):
@@ -64,17 +54,6 @@ class JourneyAdmin(admin.ModelAdmin):
     search_fields = ['name_journey']
     inlines = [VisitPointInlineAdmin, ParticipationInlineAdmin, ]
 
-
-# class ImageAdmin(admin.ModelAdmin):
-#     list_display = ['id', 'imgs']
-#     readonly_fields = ['imgs']
-#
-#     def imgs(self, image):  # truyền obj của model
-#         if image:
-#             return mark_safe(
-#                 '<img src="/static/{url}" width="100" />' \
-#                     .format(url=image.image.name)
-#             )
 
 class CommentAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'content', 'created_date']
@@ -94,5 +73,5 @@ admin_site.register(VisitPoint)
 admin_site.register(Participation, ParticipationAdmin)
 admin_site.register(Post,PostAdmin)
 admin_site.register(Comment,CommentAdmin)
+admin_site.register(CommentJourney, CommentAdmin)
 admin_site.register(Report)
-admin_site.register(Image)
