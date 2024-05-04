@@ -83,7 +83,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'journey', 'user', 'content', 'visit_point', 'created_date', 'images']
+        fields = ['id', 'journey', 'user', 'content', 'visit_point', 'estimated_time_of_arrival', 'created_date', 'images']
         read_only_fields = ['created_date']
 
     def create(self, validated_data):

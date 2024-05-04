@@ -44,16 +44,6 @@ class Interaction(BaseModel):
         abstract = True
 
 
-class VisitPoint(models.Model):
-    journey = models.ForeignKey(Journey, related_name='visit_point', on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)  # 1 hành trình có nhieu điểm ghé qua
-    estimated_duration_to_destination = models.DurationField(null=True,
-                                                             blank=True)  # thời gian ước tính từ điểm hiện tại đến đích
-
-    def __str__(self):
-        return self.name
-
-
 class Participation(Interaction):  # ds user tham gia hành trình
     joined_at = models.DateTimeField(null=True, blank=True)
     is_approved = models.BooleanField(default=False)  # xác nhận người tham gia hành trình
@@ -63,7 +53,8 @@ class Participation(Interaction):  # ds user tham gia hành trình
 
 class Post(Interaction):
     content = models.TextField()
-    visit_point = models.OneToOneField(VisitPoint, related_name='post', on_delete=models.CASCADE, null=True, blank=True)
+    visit_point = models.CharField(max_length=255, blank=True, null=True)
+    estimated_time_of_arrival = models.CharField(max_length=100, blank=True, null=True)
 
 
 class Image(models.Model):

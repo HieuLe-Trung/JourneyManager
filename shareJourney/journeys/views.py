@@ -127,7 +127,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
         journey = self.get_object()
         comment = CommentJourney.objects.get(pk=comment_pk, journey=journey)
         serializer = serializers.CommentJourneySerializers(comment,
-                                                    data=request.data)  # update ko dùng detail, nó yêu cầu user
+                                                           data=request.data)  # update ko dùng detail, nó yêu cầu user
         if comment.user == request.user:
             if serializer.is_valid():
                 serializer.save()
@@ -267,6 +267,14 @@ class CommentListAPIView(generics.ListAPIView):
     def get_queryset(self):
         post_id = self.kwargs['post_id']
         return Comment.objects.filter(post_id=post_id)
+
+
+class CommentJourneyListAPIView(generics.ListAPIView):
+    serializer_class = serializers.CommentDetailSerializers
+
+    def get_queryset(self):
+        journey_id = self.kwargs['journey_id']
+        return CommentJourney.objects.filter(journey_id=journey_id)
 
 
 def index(request):

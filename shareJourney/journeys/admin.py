@@ -1,19 +1,13 @@
 from cloudinary.models import CloudinaryResource
 from django.contrib import admin
 from django.utils.html import mark_safe
-from .models import User, Journey, VisitPoint, Participation, Post, Comment, Report, Image, CommentJourney
+from .models import User, Journey, Participation, Post, Comment, Report, Image, CommentJourney
 
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ['id', 'username', 'is_active']
     readonly_fields = ['img']
 
-    # def img(self, user):
-    #     if user:
-    #         return mark_safe(
-    #             '<img src="/static/{url}" width="240" />' \
-    #                 .format(url=user.avatar.name)
-    #         )
     def img(self, obj):
         if obj.avatar:
             if type(obj.avatar) is CloudinaryResource:
@@ -23,11 +17,6 @@ class UserAdmin(admin.ModelAdmin):
             return mark_safe(
                 f'<img src="{obj.avatar.name}" height="200" alt="avatar" />'
             )
-
-
-class VisitPointInlineAdmin(admin.StackedInline):
-    model = VisitPoint
-    fk_name = 'journey'
 
 
 class ImageInlineAdmin(admin.StackedInline):
@@ -52,7 +41,7 @@ class ParticipationAdmin(admin.ModelAdmin):
 class JourneyAdmin(admin.ModelAdmin):
     list_display = ['id', 'name_journey', 'created_date', 'start_location', 'end_location', 'active', 'user_create']
     search_fields = ['name_journey']
-    inlines = [VisitPointInlineAdmin, ParticipationInlineAdmin, ]
+    inlines = [ParticipationInlineAdmin, ]
 
 
 class CommentAdmin(admin.ModelAdmin):
@@ -69,9 +58,8 @@ admin_site = JourneyAppAdminSite(name='myjourney')
 
 admin_site.register(Journey, JourneyAdmin)
 admin_site.register(User, UserAdmin)
-admin_site.register(VisitPoint)
 admin_site.register(Participation, ParticipationAdmin)
-admin_site.register(Post,PostAdmin)
-admin_site.register(Comment,CommentAdmin)
+admin_site.register(Post, PostAdmin)
+admin_site.register(Comment, CommentAdmin)
 admin_site.register(CommentJourney, CommentAdmin)
 admin_site.register(Report)
