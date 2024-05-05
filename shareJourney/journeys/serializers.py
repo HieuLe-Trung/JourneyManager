@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import User, Journey, Image, Post, Comment, Notification, CommentJourney
+from .models import User, Journey, Image, Post, Comment, Notification, CommentJourney, Participation
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -83,7 +83,8 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'journey', 'user', 'content', 'visit_point', 'estimated_time_of_arrival', 'created_date', 'images']
+        fields = ['id', 'journey', 'user', 'content', 'visit_point', 'estimated_time_of_arrival', 'created_date',
+                  'images']
         read_only_fields = ['created_date']
 
     def create(self, validated_data):

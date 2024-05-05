@@ -144,6 +144,52 @@ class JourneyViewSet(viewsets.ModelViewSet):
         journey.save()
         return Response({'lock_cmt': journey.lock_cmt}, status=status.HTTP_200_OK)
 
+    @action(methods=['post'], detail=True, url_path='approve_comment')
+    def approve_comment(self, request, pk=None):
+        journey = self.get_object()
+        user = request.user
+        comment_id = request.data.get('comment_id')
+        try:
+            comment = CommentJourney.objects.get(pk=comment_id, journey=journey)
+        except CommentJourney.DoesNotExist:
+            return Response({"message": "Bình luận không tồn tại hoặc không thuộc hành trình này."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if Participation.objects.filter(user=comment.user, journey=journey, is_approved=True).exists():
+            return Response({"message": "Bạn đã là thành viên của hành trình."},
+                            status=status.HTTP_200_OK)
+        Participation.objects.create(user=comment.user, journey=journey, is_approved=True)
+        Notification.objects.create(
+            user=comment.user,
+            message=f"Bạn đã được {user.last_name} duyệt vào hành trình của họ."
+        )
+        return Response({"message": f"Bạn đã duyệt {comment.user} vào hành trình."},
+                        status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=True, url_path='members')
+    def get_members(self, request, pk=None):
+        journey = self.get_object()
+        participations = journey.participation_set.filter(is_approved=True).select_related('user')
+
+        members = []
+        member_data = {
+            'id': journey.user_create.id,
+            'ownerJourney': True,
+            'full_name': journey.user_create.get_full_name(),
+            'username': journey.user_create.username,
+            'avatar': journey.user_create.avatar.url if journey.user_create.avatar else None,
+        }
+        members.append(member_data)
+        for participation in participations:
+            user = participation.user
+            member_data = {
+                'id': user.id,
+                'full_name': user.get_full_name(),
+                'username': user.username,
+                'avatar': user.avatar.url if user.avatar else None,
+            }
+            members.append(member_data)  # đưa thành viên vào ds member để trả về
+        return Response(members, status=status.HTTP_200_OK)
+
 
 class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
                   generics.CreateAPIView):
@@ -269,7 +315,7 @@ class CommentListAPIView(generics.ListAPIView):
         return Comment.objects.filter(post_id=post_id)
 
 
-class CommentJourneyListAPIView(generics.ListAPIView):
+class CommentJourneyListAPIView(generics.ListAPIView):  # ds comment của 1 hành trình
     serializer_class = serializers.CommentDetailSerializers
 
     def get_queryset(self):
