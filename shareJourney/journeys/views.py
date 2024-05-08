@@ -124,6 +124,27 @@ class JourneyViewSet(viewsets.ModelViewSet):
         else:
             return Response({'error': 'Bạn không có quyền xóa comment này.'}, status=status.HTTP_403_FORBIDDEN)
 
+    @action(methods=['post'], detail=True, url_path='comment_reply')
+    def reply_to_comment(self, request, pk=None):
+        journey = self.get_object()
+        comment_id = request.data.get('comment_id')
+        content = request.data.get('content')
+
+        try:
+            comment = CommentJourney.objects.get(id=comment_id, journey=journey)
+        except CommentJourney.DoesNotExist:
+            return Response({"message": "Bình luận không tồn tại trong hành trình này."},
+                            status=status.HTTP_404_NOT_FOUND)
+        reply = CommentJourney.objects.create(
+            user=request.user,
+            journey=journey,
+            content=content,
+            parent_comment=comment
+        )
+
+        return Response({"message": "Đã trả lời bình luận thành công.", "reply_id": reply.id},
+                        status=status.HTTP_201_CREATED)
+
     @action(methods=['patch'], url_path=r'update_comment/(?P<comment_pk>\d+)', url_name='update_comment', detail=True)
     def update_comment(self, request, pk, comment_pk):
         journey = self.get_object()
@@ -275,6 +296,27 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
             return Response({'error': 'You do not have permission to perform this action.'},
                             status=status.HTTP_403_FORBIDDEN)
 
+    @action(methods=['post'], detail=True, url_path='comment_reply')
+    def reply_to_comment(self, request, pk=None):
+        post = self.get_object()
+        comment_id = request.data.get('comment_id')
+        content = request.data.get('content')
+
+        try:
+            comment = Comment.objects.get(id=comment_id, post=post)
+        except Comment.DoesNotExist:
+            return Response({"message": "Bình luận không tồn tại trong hành trình này."},
+                            status=status.HTTP_404_NOT_FOUND)
+        reply = Comment.objects.create(
+            user=request.user,
+            post=post,
+            content=content,
+            parent_comment=comment
+        )
+
+        return Response({"message": "Đã trả lời bình luận thành công.", "reply_id": reply.id},
+                        status=status.HTTP_201_CREATED)
+
     @action(methods=['post'], url_name='like', detail=True)
     def like(self, request, pk):
         post = self.get_object()
@@ -332,7 +374,7 @@ class NotificationViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
         return Response({'message': 'Notification marked as read'}, status=status.HTTP_200_OK)
 
 
-class CommentListAPIView(generics.ListAPIView):
+class CommentListAPIView(generics.ListAPIView):  # cmt của POST
     serializer_class = serializers.CommentDetailSerializers
 
     def get_queryset(self):
@@ -340,12 +382,36 @@ class CommentListAPIView(generics.ListAPIView):
         return Comment.objects.filter(post_id=post_id)
 
 
-class CommentJourneyListAPIView(generics.ListAPIView):  # ds comment của 1 hành trình
+class CommentViewSet(viewsets.ViewSet):
+    def list(self, request):
+        comment_id = request.data.get('comment_id')
+        try:
+            parent_comment = Comment.objects.get(id=comment_id)
+            replies = parent_comment.replies.all()
+            serializer = serializers.CommentDetailSerializers(replies, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Comment.DoesNotExist:
+            return Response({"message": "Bình luận không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CommentJourneyListAPIView(generics.ListAPIView):
     serializer_class = serializers.CommentDetailSerializers
 
-    def get_queryset(self):
+    def get_queryset(self):  # ds comment của 1 hành trình
         journey_id = self.kwargs['journey_id']
         return CommentJourney.objects.filter(journey_id=journey_id)
+
+
+class CommentJourneyViewSet(viewsets.ViewSet):
+    def list(self, request):
+        commentJourney_id = request.data.get('commentJourney_id')
+        try:
+            parent_comment = CommentJourney.objects.get(id=commentJourney_id)
+            replies = parent_comment.replies.all()
+            serializer = serializers.CommentJourneyDetailSerializers(replies, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CommentJourney.DoesNotExist:
+            return Response({"message": "Bình luận không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class UserJourneysListView(generics.ListAPIView):  # danh sách hành trình mà user tham gia

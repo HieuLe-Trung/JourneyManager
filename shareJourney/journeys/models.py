@@ -86,10 +86,12 @@ class LikePost(InteractionPost):
 
 class CommentJourney(Interaction):
     content = models.TextField()
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
 
 class Comment(InteractionPost):
     content = models.TextField()
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
 
 class Report(BaseModel):
