@@ -2,6 +2,7 @@ from oauth2_provider.contrib.rest_framework import permissions
 from rest_framework import viewsets, generics, parsers, status, permissions
 from django.http import HttpResponse
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
@@ -49,7 +50,8 @@ class JourneyViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'add_comment']:
             return [permissions.IsAuthenticated()]
-        elif self.action in ['update', 'partial_update', 'destroy', 'lock_comment']:
+        elif self.action in ['update', 'partial_update', 'destroy', 'lock_comment', 'delete_participant',
+                             'complete_journey']:
             return [perms.OwnerAuthenticated()]
         else:
             return [permissions.AllowAny()]
@@ -137,7 +139,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
             return Response({'error': 'You do not have permission to perform this action.'},
                             status=status.HTTP_403_FORBIDDEN)
 
-    @action(methods=['post'], url_name='lock_comment', detail=True)
+    @action(methods=['patch'], url_name='lock_comment', detail=True)
     def lock_comment(self, request, pk):
         journey = self.get_object()
         journey.lock_cmt = True
@@ -155,14 +157,30 @@ class JourneyViewSet(viewsets.ModelViewSet):
             return Response({"message": "Bình luận không tồn tại hoặc không thuộc hành trình này."},
                             status=status.HTTP_400_BAD_REQUEST)
         if Participation.objects.filter(user=comment.user, journey=journey, is_approved=True).exists():
-            return Response({"message": "Bạn đã là thành viên của hành trình."},
+            return Response({"message": f"{comment.user.last_name} đã là thành viên của hành trình."},
                             status=status.HTTP_200_OK)
         Participation.objects.create(user=comment.user, journey=journey, is_approved=True)
         Notification.objects.create(
             user=comment.user,
             message=f"Bạn đã được {user.last_name} duyệt vào hành trình của họ."
         )
-        return Response({"message": f"Bạn đã duyệt {comment.user} vào hành trình."},
+        return Response({"message": f"Bạn đã duyệt {comment.user.last_name} vào hành trình."},
+                        status=status.HTTP_200_OK)
+
+    @action(methods=['patch'], detail=True, url_path='delete_participant')
+    def delete_participant(self, request, pk=None):
+        journey = self.get_object()
+        user_id = request.data.get('user_id')
+        try:
+            user = User.objects.get(id=user_id)
+            participant = Participation.objects.get(journey=journey, user_id=user_id, is_approved=True)
+        except Participation.DoesNotExist:
+            return Response({"message": "Người dùng không tồn tại trong danh sách tham gia hoặc chưa được duyệt."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        participant.is_approved = False
+        participant.save()
+        return Response({"message": f"{user.last_name} đã bị xóa khỏi hành trình."},
                         status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=True, url_path='members')
@@ -189,6 +207,13 @@ class JourneyViewSet(viewsets.ModelViewSet):
             }
             members.append(member_data)  # đưa thành viên vào ds member để trả về
         return Response(members, status=status.HTTP_200_OK)
+
+    @action(methods=['patch'], detail=True, url_path='complete_journey')
+    def complete_journey(self, request, pk=None):
+        journey = self.get_object()
+        journey.active = False
+        journey.save()
+        return Response({"message": "Hành trình đã được hoàn thành."}, status=status.HTTP_200_OK)
 
 
 class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
@@ -321,6 +346,17 @@ class CommentJourneyListAPIView(generics.ListAPIView):  # ds comment của 1 hà
     def get_queryset(self):
         journey_id = self.kwargs['journey_id']
         return CommentJourney.objects.filter(journey_id=journey_id)
+
+
+class UserJourneysListView(generics.ListAPIView):  # danh sách hành trình mà user tham gia
+    serializer_class = serializers.JourneySerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        owned_journeys = Journey.objects.filter(user_create=user)
+        participated_journeys = Participation.objects.filter(user=user, is_approved=True).values_list('journey',
+                                                                                                      flat=True)
+        return Journey.objects.filter(id__in=participated_journeys) | owned_journeys
 
 
 def index(request):
