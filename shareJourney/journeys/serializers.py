@@ -101,7 +101,7 @@ class PostDetailSerializer(PostSerializer):
     def get_liked(self, post):
         request = self.context.get('request')
         if request.user.is_authenticated:
-            return post.likepost_set.filter(active=True).exists()
+            return post.likepost_set.filter(user=request.user,active=True).exists()
 
     class Meta:
         model = PostSerializer.Meta.model

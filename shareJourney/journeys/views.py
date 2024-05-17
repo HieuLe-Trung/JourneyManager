@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
     CommentJourney
-from journeys.serializers import NotificationSerializer, PostSerializer
+from journeys.serializers import NotificationSerializer, PostSerializer, PostDetailSerializer
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
@@ -69,7 +69,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
     def posts(self, request, pk=None):
         journey = self.get_object()
         posts = Post.objects.filter(journey=journey)
-        serializer = PostSerializer(posts, many=True)
+        serializer = PostDetailSerializer(posts, many=True,context={'request': request})
         return Response(serializer.data)
 
     @action(methods=['post'], url_name='like', detail=True)
@@ -240,7 +240,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
 class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView,
                   generics.CreateAPIView):
     queryset = Post.objects.all()
-    serializer_class = serializers.PostDetailSerializer
+    serializer_class = serializers.PostSerializer
     permission_classes = [permissions.AllowAny()]
 
     def perform_create(self, serializer):  # user đăng bài

@@ -17,6 +17,7 @@ class User(AbstractUser):
     avatar = CloudinaryField(folder="avatarJourney", null=False, blank=False, default='')
     phone = models.CharField(max_length=10, unique=True, null=True)
     email = models.EmailField(max_length=50, unique=True)
+    #rating = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True)
 
 
 class Journey(BaseModel):
