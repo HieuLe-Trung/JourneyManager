@@ -69,7 +69,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
     def posts(self, request, pk=None):
         journey = self.get_object()
         posts = Post.objects.filter(journey=journey)
-        serializer = PostDetailSerializer(posts, many=True,context={'request': request})
+        serializer = PostDetailSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(methods=['post'], url_name='like', detail=True)
@@ -91,11 +91,11 @@ class JourneyViewSet(viewsets.ModelViewSet):
             message=f"{user.last_name} đã thích hành trình của bạn."
         )
 
-    @action(detail=True, methods=['get'])
-    def likes_count(self, request, pk=None):
-        journey = self.get_object()
-        likes_count = LikeJourney.objects.filter(journey=journey, active=True).count()
-        return Response({'journey_id': pk, 'likes_count': likes_count})
+    # @action(detail=True, methods=['get'])
+    # def likes_count(self, request, pk=None):
+    #     journey = self.get_object()
+    #     likes_count = LikeJourney.objects.filter(journey=journey, active=True).count()
+    #     return Response({'journey_id': pk, 'likes_count': likes_count})
 
     @action(methods=['post'], url_name='add_comment', detail=True)
     def add_comment(self, request, pk):
@@ -336,11 +336,11 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
             message=f"{user.last_name} đã thích bài viết của bạn."
         )
 
-    @action(detail=True, methods=['get'])
-    def likes_count(self, request, pk=None):
-        post = self.get_object()
-        likes_count = LikePost.objects.filter(post=post, active=True).count()
-        return Response({'post_id': pk, 'likes_count': likes_count})
+    # @action(detail=True, methods=['get'])
+    # def likes_count(self, request, pk=None):
+    #     post = self.get_object()
+    #     likes_count = LikePost.objects.filter(post=post, active=True).count()
+    #     return Response({'post_id': pk, 'likes_count': likes_count})
 
 
 class NotificationViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
@@ -382,7 +382,7 @@ class CommentListAPIView(generics.ListAPIView):  # cmt của POST
         return Comment.objects.filter(post_id=post_id)
 
 
-class CommentViewSet(viewsets.ViewSet):
+class CommentViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
     def list(self, request):
         comment_id = request.data.get('comment_id')
         try:
@@ -402,7 +402,7 @@ class CommentJourneyListAPIView(generics.ListAPIView):
         return CommentJourney.objects.filter(journey_id=journey_id)
 
 
-class CommentJourneyViewSet(viewsets.ViewSet):
+class CommentJourneyViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
     def list(self, request):
         commentJourney_id = request.data.get('commentJourney_id')
         try:

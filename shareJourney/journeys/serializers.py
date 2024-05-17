@@ -54,15 +54,19 @@ class JourneySerializer(serializers.ModelSerializer):
 
 class JourneyDetailSerializers(JourneySerializer):
     liked = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
 
     def get_liked(self, journey):
         request = self.context.get('request')
         if request.user.is_authenticated:
             return journey.likejourney_set.filter(active=True).exists()
 
+    def get_likes_count(self, journey):
+        return journey.likejourney_set.filter(active=True).count()  # lấy những like của hành trình đó active=true
+
     class Meta:
         model = JourneySerializer.Meta.model
-        fields = JourneySerializer.Meta.fields + ['distance', 'estimated_time', 'liked']
+        fields = JourneySerializer.Meta.fields + ['distance', 'estimated_time', 'liked', 'likes_count']
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -97,15 +101,19 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PostDetailSerializer(PostSerializer):
     liked = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
 
     def get_liked(self, post):
         request = self.context.get('request')
         if request.user.is_authenticated:
-            return post.likepost_set.filter(user=request.user,active=True).exists()
+            return post.likepost_set.filter(user=request.user, active=True).exists()
+
+    def get_likes_count(self, journey):
+        return journey.likepost_set.filter(active=True).count()
 
     class Meta:
         model = PostSerializer.Meta.model
-        fields = PostSerializer.Meta.fields + ['liked']
+        fields = PostSerializer.Meta.fields + ['liked', 'likes_count']
 
 
 class CommentSerializers(serializers.ModelSerializer):  # update ko dùng detail, nó yêu cầu user
