@@ -24,9 +24,19 @@ class ImageInlineAdmin(admin.StackedInline):
     fk_name = 'post'
 
 
+class CommentInlineAdmin(admin.StackedInline):
+    model = Comment
+    fk_name = 'post'
+
+
+class CommentJourneyInlineAdmin(admin.StackedInline):
+    model = CommentJourney
+    fk_name = 'journey'
+
+
 class PostAdmin(admin.ModelAdmin):
     list_display = ['id', 'content', 'created_date', 'user']
-    inlines = [ImageInlineAdmin, ]
+    inlines = [CommentInlineAdmin, ImageInlineAdmin, ]
 
 
 class ParticipationInlineAdmin(admin.StackedInline):
@@ -38,14 +48,14 @@ class ParticipationAdmin(admin.ModelAdmin):
     list_display = ['id', 'journey']
 
 
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'content', 'created_date']
+
+
 class JourneyAdmin(admin.ModelAdmin):
     list_display = ['id', 'name_journey', 'created_date', 'start_location', 'end_location', 'active', 'user_create']
     search_fields = ['name_journey']
-    inlines = [ParticipationInlineAdmin, ]
-
-
-class CommentAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'content', 'created_date']
+    inlines = [CommentJourneyInlineAdmin, ParticipationInlineAdmin, ]
 
 
 class JourneyAppAdminSite(admin.AdminSite):

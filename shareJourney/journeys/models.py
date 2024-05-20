@@ -30,7 +30,7 @@ class Journey(BaseModel):
     # departure_time = models.DateTimeField(null=True, blank=True)  # thời gian khởi hành
     departure_time = models.CharField(max_length=100, blank=True, null=True)
     active = models.BooleanField(default=True)
-    distance = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    distance = models.CharField(max_length=100, blank=True, null=True)
     estimated_time = models.DurationField(blank=True, null=True)
 
     def __str__(self):

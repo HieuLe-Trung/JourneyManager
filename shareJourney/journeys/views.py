@@ -39,7 +39,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
 
 
 class JourneyViewSet(viewsets.ModelViewSet):
-    queryset = Journey.objects.filter(active=True).all()
+    queryset = Journey.objects.all()
     serializer_class = serializers.JourneyDetailSerializers
     pagination_class = paginators.JourneyPaginator
     permission_classes = [permissions.AllowAny()]
@@ -415,7 +415,7 @@ class CommentJourneyViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
 
 
 class UserJourneysListView(generics.ListAPIView):  # danh sách hành trình mà user tham gia
-    serializer_class = serializers.JourneySerializer
+    serializer_class = serializers.JourneyDetailSerializers
 
     def get_queryset(self):
         user = self.request.user

@@ -55,6 +55,7 @@ class JourneySerializer(serializers.ModelSerializer):
 class JourneyDetailSerializers(JourneySerializer):
     liked = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
 
     def get_liked(self, journey):
         request = self.context.get('request')
@@ -64,9 +65,13 @@ class JourneyDetailSerializers(JourneySerializer):
     def get_likes_count(self, journey):
         return journey.likejourney_set.filter(active=True).count()  # lấy những like của hành trình đó active=true
 
+    def get_comments_count(self, journey):
+        return CommentJourney.objects.filter(journey=journey).count()
+
     class Meta:
         model = JourneySerializer.Meta.model
-        fields = JourneySerializer.Meta.fields + ['distance', 'estimated_time', 'liked', 'likes_count']
+        fields = JourneySerializer.Meta.fields + ['distance', 'estimated_time', 'liked', 'likes_count', 'active',
+                                                  'lock_cmt', 'comments_count']
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -102,6 +107,7 @@ class PostSerializer(serializers.ModelSerializer):
 class PostDetailSerializer(PostSerializer):
     liked = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
 
     def get_liked(self, post):
         request = self.context.get('request')
@@ -111,9 +117,12 @@ class PostDetailSerializer(PostSerializer):
     def get_likes_count(self, journey):
         return journey.likepost_set.filter(active=True).count()
 
+    def get_comments_count(self, post):
+        return Comment.objects.filter(post=post).count()
+
     class Meta:
         model = PostSerializer.Meta.model
-        fields = PostSerializer.Meta.fields + ['liked', 'likes_count']
+        fields = PostSerializer.Meta.fields + ['liked', 'likes_count', 'comments_count']
 
 
 class CommentSerializers(serializers.ModelSerializer):  # update ko dùng detail, nó yêu cầu user
