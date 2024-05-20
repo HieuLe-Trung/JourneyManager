@@ -147,13 +147,20 @@ class CommentJourneySerializers(serializers.ModelSerializer):
 
 class CommentJourneyDetailSerializers(serializers.ModelSerializer):
     user = UserSerializer()
+    is_member = serializers.SerializerMethodField()
+
+    def get_is_member(self, comment):
+        journey = comment.journey
+        return Participation.objects.filter(journey=journey, user=comment.user, is_approved=True).exists()
 
     class Meta:
         model = CommentJourney
-        fields = ['user', 'id', 'content', 'created_date']
+        fields = ['user', 'id', 'content', 'created_date', 'is_member']
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    actor = UserSerializer()
+
     class Meta:
         model = Notification
-        fields = ['id', 'post_id', 'journey_id', 'message', 'read']
+        fields = ['id', 'post_id', 'journey_id', 'message', 'read', 'actor']

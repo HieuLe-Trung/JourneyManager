@@ -17,7 +17,7 @@ class User(AbstractUser):
     avatar = CloudinaryField(folder="avatarJourney", null=False, blank=False, default='')
     phone = models.CharField(max_length=10, unique=True, null=True)
     email = models.EmailField(max_length=50, unique=True)
-    #rating = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True)
+    # rating = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True)
 
 
 class Journey(BaseModel):
@@ -107,6 +107,7 @@ class Notification(BaseModel):
     journey = models.ForeignKey(Journey, on_delete=models.CASCADE, null=True, blank=True)
     message = models.CharField(max_length=255)
     read = models.BooleanField(default=False)
+    actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='actor_notifications',null=True, blank=True)
 
     class Meta:
         ordering = ['-created_date']

@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
     CommentJourney
-from journeys.serializers import NotificationSerializer, PostSerializer, PostDetailSerializer
+from journeys.serializers import NotificationSerializer, PostSerializer, PostDetailSerializer, \
+    CommentJourneyDetailSerializers
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
@@ -75,20 +76,21 @@ class JourneyViewSet(viewsets.ModelViewSet):
     @action(methods=['post'], url_name='like', detail=True)
     def like(self, request, pk):
         journey = self.get_object()
-        user = request.user
+        actor = request.user
         like, created = LikeJourney.objects.get_or_create(user=request.user, journey=self.get_object())
         if not created:
             like.active = not like.active
             like.save()
         if created and like.active:
-            self.create_notification(journey, user)
+            self.create_notification(journey, actor)
         return Response(status=status.HTTP_200_OK)
 
-    def create_notification(self, journey, user):
+    def create_notification(self, journey, actor):
         Notification.objects.create(
             user=journey.user_create,
             journey=journey,
-            message=f"{user.last_name} đã thích hành trình của bạn."
+            message=f"{actor.last_name} đã thích hành trình của bạn.",
+            actor=actor
         )
 
     # @action(detail=True, methods=['get'])
@@ -99,19 +101,20 @@ class JourneyViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post'], url_name='add_comment', detail=True)
     def add_comment(self, request, pk):
-        c = CommentJourney.objects.create(user=request.user,
+        actor = request.user
+        c = CommentJourney.objects.create(user=actor,
                                           journey=self.get_object(),
                                           content=request.data.get('content'))
-        self.create_notificationCmt(c)
+        self.create_notificationCmt(c, actor)
         return Response(serializers.CommentJourneyDetailSerializers(c).data, status=status.HTTP_201_CREATED)
 
-    def create_notificationCmt(self, commentJourney):
+    def create_notificationCmt(self, commentJourney, actor):
         journey = commentJourney.journey
-        user = commentJourney.user
         Notification.objects.create(
             user=journey.user_create,
             journey=journey,
-            message=f"{user.last_name} đã bình luận trên hành trình của bạn."
+            message=f"{actor.last_name} đã bình luận trên hành trình của bạn.",
+            actor=actor
         )
 
     @action(methods=['delete'], url_path=r'delete_comment/(?P<comment_pk>\d+)', url_name='delete_comment', detail=True)
@@ -256,19 +259,20 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
 
     @action(methods=['post'], url_name='add_comment', detail=True)
     def add_comment(self, request, pk):
-        c = Comment.objects.create(user=request.user,
+        actor=request.user
+        c = Comment.objects.create(user=actor,
                                    post=self.get_object(),
                                    content=request.data.get('content'))
-        self.create_notificationCmt(c)
+        self.create_notificationCmt(c,actor)
         return Response(serializers.CommentDetailSerializers(c).data, status=status.HTTP_201_CREATED)
 
-    def create_notificationCmt(self, comment):
+    def create_notificationCmt(self, comment,actor):
         post = comment.post
-        user = comment.user
         Notification.objects.create(
             user=post.user,
             post=post,
-            message=f"{user.last_name} đã bình luận trên bài viết của bạn."
+            message=f"{actor.last_name} đã bình luận trên bài viết của bạn.",
+            actor=actor
         )
 
     @action(methods=['delete'], url_path=r'delete_comment/(?P<comment_pk>\d+)', url_name='delete_comment', detail=True)
@@ -321,7 +325,7 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
     def like(self, request, pk):
         post = self.get_object()
         user = request.user
-        like, created = LikePost.objects.get_or_create(user=request.user, post=post)
+        like, created = LikePost.objects.get_or_create(user=user, post=post)
         if not created:
             like.active = not like.active
             like.save()
@@ -333,7 +337,8 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
         Notification.objects.create(
             user=post.user,
             post=post,
-            message=f"{user.last_name} đã thích bài viết của bạn."
+            message=f"{user.last_name} đã thích bài viết của bạn.",
+            actor=user
         )
 
     # @action(detail=True, methods=['get'])
@@ -395,7 +400,7 @@ class CommentViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
 
 
 class CommentJourneyListAPIView(generics.ListAPIView):
-    serializer_class = serializers.CommentDetailSerializers
+    serializer_class = CommentJourneyDetailSerializers
 
     def get_queryset(self):  # ds comment của 1 hành trình
         journey_id = self.kwargs['journey_id']
@@ -408,7 +413,7 @@ class CommentJourneyViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
         try:
             parent_comment = CommentJourney.objects.get(id=commentJourney_id)
             replies = parent_comment.replies.all()
-            serializer = serializers.CommentJourneyDetailSerializers(replies, many=True)
+            serializer = CommentJourneyDetailSerializers(replies, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except CommentJourney.DoesNotExist:
             return Response({"message": "Bình luận không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
