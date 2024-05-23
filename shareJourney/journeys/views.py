@@ -6,9 +6,9 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
-    CommentJourney
+    CommentJourney, Report, ReportedUser
 from journeys.serializers import NotificationSerializer, PostSerializer, PostDetailSerializer, \
-    CommentJourneyDetailSerializers
+    CommentJourneyDetailSerializers, ReportSerializer
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
@@ -259,14 +259,14 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
 
     @action(methods=['post'], url_name='add_comment', detail=True)
     def add_comment(self, request, pk):
-        actor=request.user
+        actor = request.user
         c = Comment.objects.create(user=actor,
                                    post=self.get_object(),
                                    content=request.data.get('content'))
-        self.create_notificationCmt(c,actor)
+        self.create_notificationCmt(c, actor)
         return Response(serializers.CommentDetailSerializers(c).data, status=status.HTTP_201_CREATED)
 
-    def create_notificationCmt(self, comment,actor):
+    def create_notificationCmt(self, comment, actor):
         post = comment.post
         Notification.objects.create(
             user=post.user,
@@ -428,6 +428,32 @@ class UserJourneysListView(generics.ListAPIView):  # danh sách hành trình mà
         participated_journeys = Participation.objects.filter(user=user, is_approved=True).values_list('journey',
                                                                                                       flat=True)
         return Journey.objects.filter(id__in=participated_journeys) | owned_journeys
+
+
+class ReportViewSet(viewsets.ViewSet):
+    serializer_class = ReportSerializer
+    queryset = Report.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    def report_user(self, request):
+        reported_user_id = request.data.get('reported_user_id')
+        reason = request.data.get('reason')
+        if not reported_user_id or not reason:
+            return Response({'error': 'Dữ liệu sai'}, status=status.HTTP_400_BAD_REQUEST)
+
+        reported_user = User.objects.get(pk=reported_user_id)
+        reported_user_profile, _ = ReportedUser.objects.get_or_create(user=reported_user) # _ không quan tâm tới created như like
+        reported_user_profile.report_count += 1
+        reported_user_profile.save()
+
+        Report.objects.get_or_create(
+            reported_user=reported_user,
+            reported_by=request.user,
+            reason=reason,
+            reported_user_profile=reported_user_profile
+        )
+        return Response({'message': 'Báo cáo thành công'}, status=status.HTTP_201_CREATED)
 
 
 def index(request):

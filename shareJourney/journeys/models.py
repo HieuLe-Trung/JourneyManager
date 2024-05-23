@@ -12,7 +12,6 @@ class BaseModel(models.Model):
 
 
 class User(AbstractUser):
-    # avatar = models.ImageField(upload_to="avatarJourney", null=True)
     is_active = models.BooleanField(default=True)  # admin khóa tài khoản
     avatar = CloudinaryField(folder="avatarJourney", null=False, blank=False, default='')
     phone = models.CharField(max_length=10, unique=True, null=True)
@@ -27,7 +26,6 @@ class Journey(BaseModel):
     lock_cmt = models.BooleanField(default=False)  # đóng khi đã đủ người tham gia
     start_location = models.CharField(max_length=100)
     end_location = models.CharField(max_length=100)
-    # departure_time = models.DateTimeField(null=True, blank=True)  # thời gian khởi hành
     departure_time = models.CharField(max_length=100, blank=True, null=True)
     active = models.BooleanField(default=True)
     distance = models.CharField(max_length=100, blank=True, null=True)
@@ -95,10 +93,22 @@ class Comment(InteractionPost):
     parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
 
+class ReportedUser(models.Model):  # lưu trạng thái xử lý
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='reported_user')  # user bị report
+    report_count = models.PositiveIntegerField(default=0)
+    is_processed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.username
+
+
 class Report(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    reporter = models.ForeignKey(User, related_name='reports_given', on_delete=models.CASCADE)
+    reported_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_received', null=True,
+                                      blank=True)
+    reported_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports_made', null=True, blank=True)
     reason = models.TextField()
+    reported_user_profile = models.ForeignKey(ReportedUser, on_delete=models.CASCADE, related_name='reports', null=True,
+                                              blank=True)  # Inlines admin
 
 
 class Notification(BaseModel):
@@ -107,7 +117,7 @@ class Notification(BaseModel):
     journey = models.ForeignKey(Journey, on_delete=models.CASCADE, null=True, blank=True)
     message = models.CharField(max_length=255)
     read = models.BooleanField(default=False)
-    actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='actor_notifications',null=True, blank=True)
+    actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='actor_notifications', null=True, blank=True)
 
     class Meta:
         ordering = ['-created_date']

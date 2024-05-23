@@ -1,7 +1,7 @@
 from cloudinary.models import CloudinaryResource
 from django.contrib import admin
 from django.utils.html import mark_safe
-from .models import User, Journey, Participation, Post, Comment, Report, Image, CommentJourney
+from .models import User, Journey, Participation, Post, Comment, Report, Image, CommentJourney, ReportedUser
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -21,16 +21,19 @@ class UserAdmin(admin.ModelAdmin):
 
 class ImageInlineAdmin(admin.StackedInline):
     model = Image
+    extra = 0
     fk_name = 'post'
 
 
 class CommentInlineAdmin(admin.StackedInline):
     model = Comment
+    extra = 0
     fk_name = 'post'
 
 
 class CommentJourneyInlineAdmin(admin.StackedInline):
     model = CommentJourney
+    extra = 0
     fk_name = 'journey'
 
 
@@ -41,6 +44,7 @@ class PostAdmin(admin.ModelAdmin):
 
 class ParticipationInlineAdmin(admin.StackedInline):
     model = Participation
+    extra = 0
     fk_name = 'journey'
 
 
@@ -58,6 +62,25 @@ class JourneyAdmin(admin.ModelAdmin):
     inlines = [CommentJourneyInlineAdmin, ParticipationInlineAdmin, ]
 
 
+class ReportInline(admin.StackedInline):
+    model = Report
+    extra = 0
+    readonly_fields = ('reported_user', 'reported_by', 'reason')
+
+
+class ReportedUserAdmin(admin.ModelAdmin):
+    list_display = ('user', 'report_count', 'is_processed', 'activate_user')
+    ordering = ('is_processed', '-report_count',)
+    readonly_fields = ('user', 'report_count')
+    inlines = [ReportInline, ]
+
+    def activate_user(self, obj):
+        return obj.user.is_active
+
+    activate_user.boolean = True  # hiển thị tick or X
+    activate_user.short_description = 'Is Active'
+
+
 class JourneyAppAdminSite(admin.AdminSite):
     site_title = 'Trang quản trị của tôi'
     site_header = 'Hệ thống Quản lý hành trình trực tuyến'
@@ -72,4 +95,4 @@ admin_site.register(Participation, ParticipationAdmin)
 admin_site.register(Post, PostAdmin)
 admin_site.register(Comment, CommentAdmin)
 admin_site.register(CommentJourney, CommentAdmin)
-admin_site.register(Report)
+admin_site.register(ReportedUser, ReportedUserAdmin)

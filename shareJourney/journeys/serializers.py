@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import User, Journey, Image, Post, Comment, Notification, CommentJourney, Participation
+from .models import User, Journey, Image, Post, Comment, Notification, CommentJourney, Participation, Report
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -164,3 +164,9 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = ['id', 'post_id', 'journey_id', 'message', 'read', 'actor']
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ['reported_user', 'reported_by', 'reason', 'created_date']
