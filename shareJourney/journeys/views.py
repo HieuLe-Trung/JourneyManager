@@ -348,35 +348,35 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
     #     return Response({'post_id': pk, 'likes_count': likes_count})
 
 
-class NotificationViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
-    queryset = Notification.objects.all()
-    serializer_class = NotificationSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def list(self, request):
-        user = request.user
-        notifications = Notification.objects.filter(user=user)
-        serializer = self.serializer_class(notifications, many=True)
-        return Response(serializer.data)
-
-    @action(methods=['get'], detail=True, url_path='redirect')
-    def redirect_to_object(self, request, pk=None):  # khi ấn vào 1 thông báo bất kỳ
-        notification = self.get_object()
-        if notification.post:
-            return Response({'post_id': notification.post_id}, status=status.HTTP_200_OK)
-        elif notification.journey:
-            return Response({'journey_id': notification.journey_id}, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Notification does not point to any object'}, status=status.HTTP_400_BAD_REQUEST)
-
-    # sau khi ấn vào 1 thông báo để xem chi tiết thì trả về id của thông báo đó để cập nhật đã xem và
-    # trả về id của post/journey để hiển thị nó
-    @action(methods=['post'], detail=True, url_path='mark_as_read')
-    def mark_as_read(self, request, pk=None):  # lấy post_id khi ấn vào xem 1 thông báo sẽ trả về post_id
-        notification = self.get_object()
-        notification.read = True
-        notification.save()
-        return Response({'message': 'Notification marked as read'}, status=status.HTTP_200_OK)
+# class NotificationViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
+#     queryset = Notification.objects.all()
+#     serializer_class = NotificationSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#
+#     def list(self, request):
+#         user = request.user
+#         notifications = Notification.objects.filter(user=user)
+#         serializer = self.serializer_class(notifications, many=True)
+#         return Response(serializer.data)
+#
+#     @action(methods=['get'], detail=True, url_path='redirect')
+#     def redirect_to_object(self, request, pk=None):  # khi ấn vào 1 thông báo bất kỳ
+#         notification = self.get_object()
+#         if notification.post:
+#             return Response({'post_id': notification.post_id}, status=status.HTTP_200_OK)
+#         elif notification.journey:
+#             return Response({'journey_id': notification.journey_id}, status=status.HTTP_200_OK)
+#         else:
+#             return Response({'error': 'Notification does not point to any object'}, status=status.HTTP_400_BAD_REQUEST)
+#
+#     # sau khi ấn vào 1 thông báo để xem chi tiết thì trả về id của thông báo đó để cập nhật đã xem và
+#     # trả về id của post/journey để hiển thị nó
+#     @action(methods=['post'], detail=True, url_path='mark_as_read')
+#     def mark_as_read(self, request, pk=None):  # lấy post_id khi ấn vào xem 1 thông báo sẽ trả về post_id
+#         notification = self.get_object()
+#         notification.read = True
+#         notification.save()
+#         return Response({'message': 'Notification marked as read'}, status=status.HTTP_200_OK)
 
 
 class CommentListAPIView(generics.ListAPIView):  # cmt của POST
@@ -387,16 +387,16 @@ class CommentListAPIView(generics.ListAPIView):  # cmt của POST
         return Comment.objects.filter(post_id=post_id)
 
 
-class CommentViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
-    def list(self, request):
-        comment_id = request.data.get('comment_id')
-        try:
-            parent_comment = Comment.objects.get(id=comment_id)
-            replies = parent_comment.replies.all()
-            serializer = serializers.CommentDetailSerializers(replies, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Comment.DoesNotExist:
-            return Response({"message": "Bình luận không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
+# class CommentViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
+#     def list(self, request):
+#         comment_id = request.data.get('comment_id')
+#         try:
+#             parent_comment = Comment.objects.get(id=comment_id)
+#             replies = parent_comment.replies.all()
+#             serializer = serializers.CommentDetailSerializers(replies, many=True)
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         except Comment.DoesNotExist:
+#             return Response({"message": "Bình luận không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CommentJourneyListAPIView(generics.ListAPIView):
@@ -407,16 +407,16 @@ class CommentJourneyListAPIView(generics.ListAPIView):
         return CommentJourney.objects.filter(journey_id=journey_id)
 
 
-class CommentJourneyViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
-    def list(self, request):
-        commentJourney_id = request.data.get('commentJourney_id')
-        try:
-            parent_comment = CommentJourney.objects.get(id=commentJourney_id)
-            replies = parent_comment.replies.all()
-            serializer = CommentJourneyDetailSerializers(replies, many=True, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except CommentJourney.DoesNotExist:
-            return Response({"message": "Bình luận không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
+# class CommentJourneyViewSet(viewsets.ViewSet):  # ds cmt của 1 cmt cha
+#     def list(self, request):
+#         commentJourney_id = request.data.get('commentJourney_id')
+#         try:
+#             parent_comment = CommentJourney.objects.get(id=commentJourney_id)
+#             replies = parent_comment.replies.all()
+#             serializer = CommentJourneyDetailSerializers(replies, many=True, context={'request': request})
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         except CommentJourney.DoesNotExist:
+#             return Response({"message": "Bình luận không tồn tại."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class UserJourneysListView(generics.ListAPIView):  # danh sách hành trình mà user tham gia

@@ -125,6 +125,12 @@ class PostDetailSerializer(PostSerializer):
         fields = PostSerializer.Meta.fields + ['liked', 'likes_count', 'comments_count']
 
 
+class RecursiveField(serializers.Serializer): #lồng các cmt con vào 1 cmt
+    def to_representation(self, value):
+        serializer = self.parent.parent.__class__(value, context=self.context)
+        return serializer.data
+
+
 class CommentSerializers(serializers.ModelSerializer):  # update ko dùng detail, nó yêu cầu user
     class Meta:
         model = Comment
@@ -133,10 +139,11 @@ class CommentSerializers(serializers.ModelSerializer):  # update ko dùng detail
 
 class CommentDetailSerializers(serializers.ModelSerializer):
     user = UserSerializer()
+    replies = RecursiveField(many=True)
 
     class Meta:
         model = Comment
-        fields = ['user', 'id', 'content', 'created_date']
+        fields = ['user', 'id', 'content', 'created_date', 'replies']
 
 
 class CommentJourneySerializers(serializers.ModelSerializer):
@@ -147,6 +154,7 @@ class CommentJourneySerializers(serializers.ModelSerializer):
 
 class CommentJourneyDetailSerializers(serializers.ModelSerializer):
     user = UserSerializer()
+    replies = RecursiveField(many=True)
     is_member = serializers.SerializerMethodField()
 
     def get_is_member(self, comment):
@@ -155,7 +163,7 @@ class CommentJourneyDetailSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = CommentJourney
-        fields = ['user', 'id', 'content', 'created_date', 'is_member']
+        fields = ['user', 'id', 'content', 'created_date', 'is_member', 'replies']
 
 
 class NotificationSerializer(serializers.ModelSerializer):
