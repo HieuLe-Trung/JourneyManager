@@ -1,19 +1,27 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import User, Journey, Image, Post, Comment, Notification, CommentJourney, Participation, Report
+from .models import User, Journey, Image, Post, Comment, Notification, CommentJourney, Participation, Report, Follow
 
 
 class UserSerializer(serializers.ModelSerializer):
+    followed = serializers.SerializerMethodField()
+
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         rep['avatar'] = instance.avatar.url
         return rep
 
+    def get_followed(self, obj):
+        if self.context.get('request') and self.context['request'].user.id:
+            return Follow.objects.filter(follower=self.context['request'].user, following=obj,
+                                         is_active=True).first() is not None
+        return False
+
     class Meta:
         model = User
         fields = ['id', 'first_name', 'last_name', 'username', 'phone', 'email', 'password',
-                  'avatar']  # những trường user POST lên khi đăng ký
+                  'avatar', 'followed']  # những trường user POST lên khi đăng ký
         read_only_fields = ['id']
         extra_kwargs = {
             'password': {
@@ -42,6 +50,21 @@ class UserSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+
+class UserDetailSerializer(UserSerializer):
+    follower_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+
+    def get_follower_count(self, obj):
+        return Follow.objects.filter(following=obj, is_active=True).count()
+
+    def get_following_count(self, obj):
+        return Follow.objects.filter(follower=obj, is_active=True).count()
+
+    class Meta:
+        model = UserSerializer.Meta.model
+        fields = UserSerializer.Meta.fields + ['follower_count', 'following_count']
 
 
 class JourneySerializer(serializers.ModelSerializer):
@@ -125,7 +148,7 @@ class PostDetailSerializer(PostSerializer):
         fields = PostSerializer.Meta.fields + ['liked', 'likes_count', 'comments_count']
 
 
-class RecursiveField(serializers.Serializer): #lồng các cmt con vào 1 cmt
+class RecursiveField(serializers.Serializer):  # lồng các cmt con vào 1 cmt
     def to_representation(self, value):
         serializer = self.parent.parent.__class__(value, context=self.context)
         return serializer.data

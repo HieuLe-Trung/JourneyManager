@@ -47,7 +47,7 @@ class Participation(Interaction):  # ds user tham gia hành trình
     joined_at = models.DateTimeField(null=True, blank=True)
     is_approved = models.BooleanField(default=False)  # xác nhận người tham gia hành trình
     rating = models.IntegerField(null=True, blank=True)
-    current_location = models.CharField(max_length=100, null=True)
+    # current_location = models.CharField(max_length=100, null=True)
 
 
 class Post(Interaction):
@@ -109,6 +109,15 @@ class Report(BaseModel):
     reason = models.TextField()
     reported_user_profile = models.ForeignKey(ReportedUser, on_delete=models.CASCADE, related_name='reports', null=True,
                                               blank=True)  # Inlines admin
+
+
+class Follow(BaseModel):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follow_user')
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follow_following')
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('follower', 'following')
 
 
 class Notification(BaseModel):

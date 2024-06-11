@@ -6,7 +6,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
-    CommentJourney, Report, ReportedUser
+    CommentJourney, Report, ReportedUser, Follow
 from journeys.serializers import NotificationSerializer, PostSerializer, PostDetailSerializer, \
     CommentJourneyDetailSerializers, ReportSerializer
 
@@ -17,8 +17,8 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
     parser_classes = [parsers.MultiPartParser]
 
     def get_permissions(self):
-        if self.action.__eq__('current_user'):
-            return [perms.OwnerPostAuthenticated()]
+        if self.action in ['current_user', 'get_followers', 'get_following', 'follow']:
+            return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
     # lấy thông tin người đang đăng nhập để hiển thị profile
@@ -36,7 +36,30 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
             user.is_active = False
             user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(serializers.UserSerializer(request.user).data)
+        return Response(serializers.UserDetailSerializer(request.user).data)
+
+    @action(methods=['get'], url_path='followers', detail=True)
+    def get_followers(self, request, pk):
+        followers = Follow.objects.filter(following=self.get_object(), is_active=True).all()
+        serializer = serializers.UserSerializer([follow.follower for follow in followers], many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    @action(methods=['get'], url_path='following', detail=True)
+    def get_following(self, request, pk):
+        following = Follow.objects.filter(follower=self.get_object(), is_active=True).all()
+        serializer = serializers.UserSerializer([follow.following for follow in following], many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    @action(methods=['post'], url_path='follow', detail=True)
+    def follow(self, request, pk):
+
+        follow, created = Follow.objects.get_or_create(follower=request.user, following=self.get_object())
+
+        if not created:
+            follow.is_active = not follow.is_active
+            follow.save()
+
+        return Response(status=status.HTTP_200_OK)
 
 
 class JourneyViewSet(viewsets.ModelViewSet):
@@ -215,7 +238,6 @@ class JourneyViewSet(viewsets.ModelViewSet):
         members = []
         member_data = {
             'id': journey.user_create.id,
-            'ownerJourney': True,
             'full_name': journey.user_create.get_full_name(),
             'username': journey.user_create.username,
             'avatar': journey.user_create.avatar.url if journey.user_create.avatar else None,
@@ -443,7 +465,8 @@ class ReportViewSet(viewsets.ViewSet):
             return Response({'error': 'Dữ liệu sai'}, status=status.HTTP_400_BAD_REQUEST)
 
         reported_user = User.objects.get(pk=reported_user_id)
-        reported_user_profile, _ = ReportedUser.objects.get_or_create(user=reported_user) # _ không quan tâm tới created như like
+        reported_user_profile, _ = ReportedUser.objects.get_or_create(
+            user=reported_user)  # _ không quan tâm tới created như like
         reported_user_profile.report_count += 1
         reported_user_profile.save()
 
