@@ -1,6 +1,10 @@
 from cloudinary.models import CloudinaryResource
 from django.contrib import admin
-from django.utils.html import mark_safe
+from django.http import HttpResponseRedirect
+from django.urls import path, reverse
+from django.utils.html import mark_safe, format_html
+from rest_framework.generics import get_object_or_404
+
 from .models import User, Journey, Participation, Post, Comment, Report, Image, CommentJourney, ReportedUser
 
 

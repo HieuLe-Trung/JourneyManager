@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from .admin import admin_site
 from .views import CommentListAPIView, CommentJourneyListAPIView, UserJourneysListView
 
 router = DefaultRouter()
@@ -21,4 +22,6 @@ urlpatterns = [
     path('post/<int:post_id>/comments/', CommentListAPIView.as_view(), name='post-comment-list'),
     path('journey/<int:journey_id>/comments/', CommentJourneyListAPIView.as_view(), name='journey-comment-list'),
     path('user_journeys/', UserJourneysListView.as_view(), name='user_journeys_list'),
+    path('admin/statistics/', views.journey_statistics, name='journey_statistics'),
+    path('admin/statistics/data/', views.journey_statistics_data, name='journey_statistics_data'),
 ]

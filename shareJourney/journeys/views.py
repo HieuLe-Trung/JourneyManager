@@ -1,6 +1,10 @@
+from datetime import datetime, timedelta
+
+from django.shortcuts import render
+from django.utils.timezone import now, make_aware
 from oauth2_provider.contrib.rest_framework import permissions
 from rest_framework import viewsets, generics, parsers, status, permissions
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -13,7 +17,7 @@ from journeys.serializers import NotificationSerializer, PostSerializer, PostDet
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
     queryset = User.objects.filter(is_active=True).all()
-    serializer_class = serializers.UserSerializer
+    serializer_class = serializers.UserDetailSerializer
     parser_classes = [parsers.MultiPartParser]
 
     def get_permissions(self):
@@ -481,3 +485,49 @@ class ReportViewSet(viewsets.ViewSet):
 
 def index(request):
     return HttpResponse("Share Journey App")
+
+
+def journey_statistics(request):
+    total_journeys = Journey.objects.count()
+    total_active_journeys = Journey.objects.filter(active=True).count()
+    total_completed_journeys = Journey.objects.filter(active=False).count()
+
+    today = now().date()
+    start_of_month = today.replace(day=1)
+    journeys_completed_this_month = Journey.objects.filter(active=False, updated_date__gte=start_of_month).count()
+
+    context = {
+        'total_journeys': total_journeys,
+        'total_active_journeys': total_active_journeys,
+        'total_completed_journeys': total_completed_journeys,
+        'journeys_completed_this_month': journeys_completed_this_month,
+    }
+
+    return render(request, 'admin/statistics.html', context)
+
+
+def journey_statistics_data(request):
+    date_value = request.GET.get('date_value')
+
+    try:
+        date = make_aware(datetime.strptime(date_value, '%Y-%m'))
+        start_of_period = date.replace(day=1)
+        next_month = (start_of_period + timedelta(days=32)).replace(day=1)
+        end_of_period = next_month
+
+        total_journeys = Journey.objects.filter(created_date__gte=start_of_period,
+                                                created_date__lt=end_of_period).count()
+        total_active_journeys = Journey.objects.filter(created_date__gte=start_of_period,
+                                                       created_date__lt=end_of_period, active=True).count()
+        total_completed_journeys = Journey.objects.filter(updated_date__gte=start_of_period,
+                                                          updated_date__lt=end_of_period, active=False).count()
+
+        data = {
+            'total_journeys': total_journeys,
+            'total_active_journeys': total_active_journeys,
+            'total_completed_journeys': total_completed_journeys,
+        }
+
+        return JsonResponse(data)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date value'}, status=400)
