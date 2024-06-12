@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -79,6 +80,7 @@ class JourneyDetailSerializers(JourneySerializer):
     liked = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
 
     def get_liked(self, journey):
         request = self.context.get('request')
@@ -91,10 +93,22 @@ class JourneyDetailSerializers(JourneySerializer):
     def get_comments_count(self, journey):
         return CommentJourney.objects.filter(journey=journey).count()
 
+    def get_average_rating(self, obj):
+        average = obj.participation_set.filter(is_approved=True).aggregate(Avg('rating'))['rating__avg']
+        return round(average, 1) if average else 0
+
     class Meta:
         model = JourneySerializer.Meta.model
         fields = JourneySerializer.Meta.fields + ['distance', 'estimated_time', 'liked', 'likes_count', 'active',
-                                                  'lock_cmt', 'comments_count']
+                                                  'lock_cmt', 'comments_count', 'average_rating']
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+
+    class Meta:
+        model = Participation
+        fields = ['user', 'rating']
 
 
 class ImageSerializer(serializers.ModelSerializer):
