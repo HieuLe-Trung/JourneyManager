@@ -16,7 +16,7 @@ class User(AbstractUser):
     avatar = CloudinaryField(folder="avatarJourney", null=False, blank=False, default='')
     phone = models.CharField(max_length=10, unique=True, null=True)
     email = models.EmailField(max_length=50, unique=True)
-    # rating = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True)
+    rate = models.FloatField(null=True, blank=True, default=0.0)
 
 
 class Journey(BaseModel):
@@ -47,12 +47,13 @@ class Participation(Interaction):  # ds user tham gia hành trình
     joined_at = models.DateTimeField(null=True, blank=True)
     is_approved = models.BooleanField(default=False)  # xác nhận người tham gia hành trình
     rating = models.IntegerField(null=True, blank=True)
-    # current_location = models.CharField(max_length=100, null=True)
 
 
 class Post(Interaction):
     content = models.TextField()
     visit_point = models.CharField(max_length=255, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     estimated_time_of_arrival = models.CharField(max_length=100, blank=True, null=True)
 
 

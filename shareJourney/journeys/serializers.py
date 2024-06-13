@@ -65,7 +65,7 @@ class UserDetailSerializer(UserSerializer):
 
     class Meta:
         model = UserSerializer.Meta.model
-        fields = UserSerializer.Meta.fields + ['follower_count', 'following_count']
+        fields = UserSerializer.Meta.fields + ['rate', 'follower_count', 'following_count']
 
 
 class JourneySerializer(serializers.ModelSerializer):

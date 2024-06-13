@@ -9,7 +9,7 @@ from .models import User, Journey, Participation, Post, Comment, Report, Image, 
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['id', 'username', 'is_active']
+    list_display = ['id', 'username', 'rate', 'is_active']
     readonly_fields = ['img']
 
     def img(self, obj):
@@ -53,7 +53,7 @@ class ParticipationInlineAdmin(admin.StackedInline):
 
 
 class ParticipationAdmin(admin.ModelAdmin):
-    list_display = ['id', 'journey']
+    list_display = ['id', 'user', 'journey','journey_id','is_approved']
 
 
 class CommentAdmin(admin.ModelAdmin):

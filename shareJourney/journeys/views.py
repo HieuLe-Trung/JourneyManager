@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.db.models import Avg
 from django.shortcuts import render
 from django.utils.timezone import now, make_aware
 from oauth2_provider.contrib.rest_framework import permissions
@@ -280,6 +281,16 @@ class JourneyViewSet(viewsets.ModelViewSet):
             participation = Participation.objects.get(journey=journey, user=user, is_approved=True)
             participation.rating = rating
             participation.save()
+
+            # mỗi lần có đánh giá mới thì cập nhật cho profile
+            user_create = journey.user_create
+            avg_rating = Participation.objects.filter(journey__user_create=user_create).aggregate(Avg('rating'))[
+                'rating__avg']
+            if avg_rating is not None:
+                avg_rating = round(avg_rating, 1)  # làm tròn 1 số thập phân
+            user_create.rate = avg_rating
+            user_create.save()
+
             return Response({"message": "Đánh giá thành công."}, status=status.HTTP_200_OK)
         except Participation.DoesNotExist:
             return Response({"message": "Bạn không phải là thành viên của hành trình này."},
