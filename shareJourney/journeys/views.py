@@ -7,12 +7,11 @@ from oauth2_provider.contrib.rest_framework import permissions
 from rest_framework import viewsets, generics, parsers, status, permissions
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
     CommentJourney, Report, ReportedUser, Follow
-from journeys.serializers import NotificationSerializer, PostSerializer, PostDetailSerializer, \
+from journeys.serializers import PostDetailSerializer, \
     CommentJourneyDetailSerializers, ReportSerializer
 
 
@@ -91,13 +90,13 @@ class JourneyViewSet(viewsets.ModelViewSet):
         q = self.request.query_params.get("q")  # khi search /?q=... thì lấy giá trị q về
         if q:
             queries = queries.filter(name_journey__icontains=q)
-
+        queries = queries.order_by('-created_date')
         return queries
 
     @action(detail=True, methods=['get'])
     def posts(self, request, pk=None):
         journey = self.get_object()
-        posts = Post.objects.filter(journey=journey)
+        posts = Post.objects.filter(journey=journey).order_by('-created_date')
         serializer = PostDetailSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -241,13 +240,14 @@ class JourneyViewSet(viewsets.ModelViewSet):
         participations = journey.participation_set.filter(is_approved=True).select_related('user')
 
         members = []
-        member_data = {
+        member_data = {  # lấy ra người tạo hành trình
             'id': journey.user_create.id,
             'ownerJourney': True,
             'full_name': journey.user_create.get_full_name(),
             'username': journey.user_create.username,
             'avatar': journey.user_create.avatar.url if journey.user_create.avatar else None,
-
+            'post': journey.user_create.post_set.all().order_by('-created_date').values('visit_point', 'latitude',
+                                                            'longitude').first(), # lấy bài đăng mới nhất
         }
         members.append(member_data)
         for participation in participations:
@@ -257,6 +257,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
                 'full_name': user.get_full_name(),
                 'username': user.username,
                 'avatar': user.avatar.url if user.avatar else None,
+                'post': user.post_set.all().order_by('-created_date').values('visit_point', 'latitude', 'longitude').first(),
             }
             members.append(member_data)  # đưa thành viên vào ds member để trả về
         return Response(members, status=status.HTTP_200_OK)
