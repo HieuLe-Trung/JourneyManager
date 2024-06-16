@@ -73,7 +73,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny()]
 
     def perform_create(self, serializer):  # khi gọi api create sẽ lấy user đang đăng nhập gán vào
-        serializer.save(user_create=self.request.user)
+        serializer.save(user_create=self.request.user, active=True)
 
     def get_permissions(self):
         if self.action in ['create', 'add_comment']:
