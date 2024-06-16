@@ -1,16 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .admin import admin_site
 from .views import CommentListAPIView, CommentJourneyListAPIView, UserJourneysListView
 
 router = DefaultRouter()
 router.register('journey', views.JourneyViewSet, basename='journey')
 router.register('post', views.PostViewSet, basename='post')
 router.register('user', views.UserViewSet)
-# router.register('commentsJourney', views.CommentJourneyViewSet, basename='commentsJourney') # ds cmt của 1 cmt cha
-# router.register('commentsPost', views.CommentViewSet, basename='commentsPost')
-# router.register('notifications', views.NotificationViewSet)
 router.register('Report', views.ReportViewSet)
 
 urlpatterns = [

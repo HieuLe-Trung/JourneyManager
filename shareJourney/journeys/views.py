@@ -73,7 +73,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny()]
 
     def perform_create(self, serializer):  # khi gọi api create sẽ lấy user đang đăng nhập gán vào
-        serializer.save(user_create=self.request.user)
+        serializer.save(user_create=self.request.user, active=True)
 
     def get_permissions(self):
         if self.action in ['create', 'add_comment']:
@@ -119,12 +119,6 @@ class JourneyViewSet(viewsets.ModelViewSet):
             message=f"{actor.last_name} đã thích hành trình của bạn.",
             actor=actor
         )
-
-    # @action(detail=True, methods=['get'])
-    # def likes_count(self, request, pk=None):
-    #     journey = self.get_object()
-    #     likes_count = LikeJourney.objects.filter(journey=journey, active=True).count()
-    #     return Response({'journey_id': pk, 'likes_count': likes_count})
 
     @action(methods=['post'], url_name='add_comment', detail=True)
     def add_comment(self, request, pk):
@@ -398,12 +392,6 @@ class PostViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
             message=f"{user.last_name} đã thích bài viết của bạn.",
             actor=user
         )
-
-    # @action(detail=True, methods=['get'])
-    # def likes_count(self, request, pk=None):
-    #     post = self.get_object()
-    #     likes_count = LikePost.objects.filter(post=post, active=True).count()
-    #     return Response({'post_id': pk, 'likes_count': likes_count})
 
 
 # class NotificationViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
