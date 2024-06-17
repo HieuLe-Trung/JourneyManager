@@ -56,16 +56,18 @@ class UserSerializer(serializers.ModelSerializer):
 class UserDetailSerializer(UserSerializer):
     follower_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
-
+    journey_count = serializers.SerializerMethodField()
     def get_follower_count(self, obj):
         return Follow.objects.filter(following=obj, is_active=True).count()
 
     def get_following_count(self, obj):
         return Follow.objects.filter(follower=obj, is_active=True).count()
 
+    def get_journey_count(self, obj):
+        return Journey.objects.filter(user_create=obj).count()
     class Meta:
         model = UserSerializer.Meta.model
-        fields = UserSerializer.Meta.fields + ['rate', 'follower_count', 'following_count']
+        fields = UserSerializer.Meta.fields + ['rate', 'follower_count', 'following_count', 'journey_count']
 
 
 class JourneySerializer(serializers.ModelSerializer):

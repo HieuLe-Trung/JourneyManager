@@ -3,11 +3,15 @@ from datetime import datetime, timedelta
 from django.db.models import Avg
 from django.shortcuts import render
 from django.utils.timezone import now, make_aware
+from django.views.decorators.csrf import csrf_exempt
 from oauth2_provider.contrib.rest_framework import permissions
 from rest_framework import viewsets, generics, parsers, status, permissions
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.utils import json
+from underthesea import sentiment
+
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
     CommentJourney, Report, ReportedUser, Follow
@@ -90,6 +94,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
         q = self.request.query_params.get("q")  # khi search /?q=... thì lấy giá trị q về
         if q:
             queries = queries.filter(name_journey__icontains=q)
+        queries = queries.filter(active=True)
         queries = queries.order_by('-created_date')
         return queries
 
@@ -241,7 +246,8 @@ class JourneyViewSet(viewsets.ModelViewSet):
             'username': journey.user_create.username,
             'avatar': journey.user_create.avatar.url if journey.user_create.avatar else None,
             'post': journey.user_create.post_set.all().order_by('-created_date').values('visit_point', 'latitude',
-                                                            'longitude').first(), # lấy bài đăng mới nhất
+                                                                                        'longitude').first(),
+            # lấy bài đăng mới nhất
         }
         members.append(member_data)
         for participation in participations:
@@ -251,7 +257,8 @@ class JourneyViewSet(viewsets.ModelViewSet):
                 'full_name': user.get_full_name(),
                 'username': user.username,
                 'avatar': user.avatar.url if user.avatar else None,
-                'post': user.post_set.all().order_by('-created_date').values('visit_point', 'latitude', 'longitude').first(),
+                'post': user.post_set.all().order_by('-created_date').values('visit_point', 'latitude',
+                                                                             'longitude').first(),
             }
             members.append(member_data)  # đưa thành viên vào ds member để trả về
         return Response(members, status=status.HTTP_200_OK)
@@ -497,6 +504,7 @@ def journey_statistics(request):
         'total_active_journeys': total_active_journeys,
         'total_completed_journeys': total_completed_journeys,
         'journeys_completed_this_month': journeys_completed_this_month,
+        'now': now(),
     }
 
     return render(request, 'admin/statistics.html', context)
@@ -527,3 +535,18 @@ def journey_statistics_data(request):
         return JsonResponse(data)
     except ValueError:
         return JsonResponse({'error': 'Invalid date value'}, status=400)
+
+
+# @csrf_exempt
+# def analyze_sentiment(request):
+#     if request.method == 'POST':
+#         data = json.loads(request.body.decode('utf-8'))
+#         text_classification = data.get('text')
+#         # return JsonResponse({'result': text_classification})
+#         if text_classification:
+#             res = sentiment(text_classification)
+#             if res is None:
+#                 return JsonResponse({'result': 'Neutral'})
+#             return JsonResponse({'result': res})
+#         return JsonResponse({'error': 'No text provided'}, status=400)
+#     return JsonResponse({'error': 'Invalid request method'}, status=405)

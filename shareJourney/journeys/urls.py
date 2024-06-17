@@ -20,4 +20,5 @@ urlpatterns = [
     path('user_journeys/', UserJourneysListView.as_view(), name='user_journeys_list'),
     path('admin/statistics/', views.journey_statistics, name='journey_statistics'),
     path('admin/statistics/data/', views.journey_statistics_data, name='journey_statistics_data'),
+    # path('analyze_sentiment/', views.analyze_sentiment, name='analyze_sentiment'),
 ]
