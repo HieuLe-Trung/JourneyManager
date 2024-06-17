@@ -3,14 +3,14 @@ from datetime import datetime, timedelta
 from django.db.models import Avg
 from django.shortcuts import render
 from django.utils.timezone import now, make_aware
-from django.views.decorators.csrf import csrf_exempt
+# from django.views.decorators.csrf import csrf_exempt
 from oauth2_provider.contrib.rest_framework import permissions
 from rest_framework import viewsets, generics, parsers, status, permissions
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.utils import json
-from underthesea import sentiment
+# from rest_framework.utils import json
+# from underthesea import sentiment
 
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
@@ -89,6 +89,27 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
 
         return Response(status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['get'])
+    def journeys(self, request, pk):
+        user = self.get_object()
+        owned_journeys = Journey.objects.filter(user_create=user)
+        participated_journeys = Participation.objects.filter(user=user, is_approved=True).values_list('journey',
+                                                                                                      flat=True)
+        journeys = Journey.objects.filter(id__in=participated_journeys) | owned_journeys
+        serializer = serializers.JourneyDetailSerializers(journeys, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class UserJourneysListView(generics.ListAPIView):  # danh sách hành trình mà user tham gia
+    serializer_class = serializers.JourneyDetailSerializers
+
+    def get_queryset(self):
+        user = self.request.user
+        owned_journeys = Journey.objects.filter(user_create=user)
+        participated_journeys = Participation.objects.filter(user=user, is_approved=True).values_list('journey',
+                                                                                                      flat=True)
+        return Journey.objects.filter(id__in=participated_journeys) | owned_journeys
+
 
 class JourneyViewSet(viewsets.ModelViewSet):
     queryset = Journey.objects.all()
@@ -114,7 +135,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
         q = self.request.query_params.get("q")  # khi search /?q=... thì lấy giá trị q về
         if q:
             queries = queries.filter(name_journey__icontains=q)
-        queries = queries.filter(active=True)
+        # queries = queries.filter(active=True)
         queries = queries.order_by('-created_date')
         return queries
 
@@ -466,17 +487,6 @@ class CommentJourneyListAPIView(generics.ListAPIView):
     def get_queryset(self):  # ds comment của 1 hành trình
         journey_id = self.kwargs['journey_id']
         return CommentJourney.objects.filter(journey_id=journey_id)
-
-
-class UserJourneysListView(generics.ListAPIView):  # danh sách hành trình mà user tham gia
-    serializer_class = serializers.JourneyDetailSerializers
-
-    def get_queryset(self):
-        user = self.request.user
-        owned_journeys = Journey.objects.filter(user_create=user)
-        participated_journeys = Participation.objects.filter(user=user, is_approved=True).values_list('journey',
-                                                                                                      flat=True)
-        return Journey.objects.filter(id__in=participated_journeys) | owned_journeys
 
 
 def index(request):
