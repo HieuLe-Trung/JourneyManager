@@ -93,10 +93,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
     def journeys(self, request, pk):
         user = self.get_object()
         owned_journeys = Journey.objects.filter(user_create=user)
-        participated_journeys = Participation.objects.filter(user=user, is_approved=True).values_list('journey',
-                                                                                                      flat=True)
-        journeys = Journey.objects.filter(id__in=participated_journeys) | owned_journeys
-        serializer = serializers.JourneyDetailSerializers(journeys, many=True, context={'request': request})
+        serializer = serializers.JourneyDetailSerializers(owned_journeys, many=True, context={'request': request})
         return Response(serializer.data)
 
 
