@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-
 import cloudinary
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,7 +41,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'journeys.apps.JourneysConfig',
     'rest_framework',
-    'oauth2_provider'
+    'oauth2_provider',
+    # 'sentiment',
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
