@@ -46,6 +46,26 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(serializers.UserDetailSerializer(request.user).data)
 
+    @action(detail=True, methods=['post'])
+    def report_user(self, request, pk=None):
+        reason = request.data.get('reason')
+
+        if not reason:
+            return Response({'error': 'Dữ liệu sai'}, status=status.HTTP_400_BAD_REQUEST)
+
+        reported_user = self.get_object()
+        reported_user_profile, _ = ReportedUser.objects.get_or_create(user=reported_user)
+        reported_user_profile.report_count += 1
+        reported_user_profile.save()
+
+        report = Report.objects.create(
+            reported_user=reported_user,
+            reported_by=request.user,
+            reason=reason,
+            reported_user_profile=reported_user_profile
+        )
+
+        return Response({'message': 'Báo cáo thành công', 'report_id': report.id}, status=status.HTTP_201_CREATED)
     @action(methods=['get'], url_path='followers', detail=True)
     def get_followers(self, request, pk):
         followers = Follow.objects.filter(following=self.get_object(), is_active=True).all()
@@ -459,33 +479,6 @@ class UserJourneysListView(generics.ListAPIView):  # danh sách hành trình mà
         return Journey.objects.filter(id__in=participated_journeys) | owned_journeys
 
 
-class ReportViewSet(viewsets.ViewSet):
-    serializer_class = ReportSerializer
-    queryset = Report.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-
-    @action(detail=False, methods=['post'])
-    def report_user(self, request):
-        reported_user_id = request.data.get('reported_user_id')
-        reason = request.data.get('reason')
-        if not reported_user_id or not reason:
-            return Response({'error': 'Dữ liệu sai'}, status=status.HTTP_400_BAD_REQUEST)
-
-        reported_user = User.objects.get(pk=reported_user_id)
-        reported_user_profile, _ = ReportedUser.objects.get_or_create(
-            user=reported_user)  # _ không quan tâm tới created như like
-        reported_user_profile.report_count += 1
-        reported_user_profile.save()
-
-        Report.objects.get_or_create(
-            reported_user=reported_user,
-            reported_by=request.user,
-            reason=reason,
-            reported_user_profile=reported_user_profile
-        )
-        return Response({'message': 'Báo cáo thành công'}, status=status.HTTP_201_CREATED)
-
-
 def index(request):
     return HttpResponse("Share Journey App")
 
@@ -537,6 +530,7 @@ def journey_statistics_data(request):
         return JsonResponse({'error': 'Invalid date value'}, status=400)
 
 
+
 # @csrf_exempt
 # def analyze_sentiment(request):
 #     if request.method == 'POST':
@@ -550,3 +544,5 @@ def journey_statistics_data(request):
 #             return JsonResponse({'result': res})
 #         return JsonResponse({'error': 'No text provided'}, status=400)
 #     return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+

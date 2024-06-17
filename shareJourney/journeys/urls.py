@@ -7,7 +7,6 @@ router = DefaultRouter()
 router.register('journey', views.JourneyViewSet, basename='journey')
 router.register('post', views.PostViewSet, basename='post')
 router.register('user', views.UserViewSet)
-router.register('Report', views.ReportViewSet)
 
 urlpatterns = [
     path('', include(router.urls), name="index"),
