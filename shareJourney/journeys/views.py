@@ -130,8 +130,11 @@ class JourneyViewSet(viewsets.ModelViewSet):
         q = self.request.query_params.get("q")  # khi search /?q=... thì lấy giá trị q về
         if q:
             queries = queries.filter(name_journey__icontains=q)
-        # queries = queries.filter(active=True)
-        queries = queries.order_by('-created_date')
+        if self.action == 'retrieve':
+            queries = queries.order_by('-created_date')
+        else:
+            queries = queries.filter(active=True).order_by('-created_date')
+
         return queries
 
     @action(detail=True, methods=['get'])
