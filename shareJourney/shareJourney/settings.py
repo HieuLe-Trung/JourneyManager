@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'journeys.apps.JourneysConfig',
     'rest_framework',
     'oauth2_provider',
+    # 'vnpay',
     # 'sentiment',
 ]
 REST_FRAMEWORK = {
@@ -141,6 +142,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# VNPAY Config
+# VNPAY_TMN_CODE = '7YLZLB0L'
+# VNPAY_HASH_SECRET_KEY = 'T7N6TK5BS04SQ3EWTZL4O8VM5E898YN8'
+# VNPAY_PAYMENT_URL = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
+# VNPAY_RETURN_URL = 'http://127.0.0.1:8000/vnpay/payment_return/'
 
 CLIENT_ID = 'C1uW7lZhxcG4nqKBwiqiakAMYmRz5DGkuOUDlDhL'
 CLIENT_SECRET = 'xiQNKzXV86nLpmlwg0wBpTs6OhUfBZZHn9IgjamzRZktU4weTe7I7k4JK7Rk3obsJfwJhG5u1p2dukNptdg3t1diaUDUuSmWR9mzcww60Kd8rv96KItmnMac7PRkkyaK'

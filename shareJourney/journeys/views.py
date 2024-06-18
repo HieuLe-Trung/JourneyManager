@@ -3,20 +3,17 @@ from datetime import datetime, timedelta
 from django.db.models import Avg
 from django.shortcuts import render
 from django.utils.timezone import now, make_aware
-# from django.views.decorators.csrf import csrf_exempt
 from oauth2_provider.contrib.rest_framework import permissions
 from rest_framework import viewsets, generics, parsers, status, permissions
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
-# from rest_framework.utils import json
-# from underthesea import sentiment
 
 from journeys import serializers, perms, paginators
 from journeys.models import User, Journey, Post, Comment, LikePost, LikeJourney, Notification, Participation, \
     CommentJourney, Report, ReportedUser, Follow
 from journeys.serializers import PostDetailSerializer, \
-    CommentJourneyDetailSerializers, ReportSerializer
+    CommentJourneyDetailSerializers
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
@@ -25,7 +22,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
     parser_classes = [parsers.MultiPartParser]
 
     def get_permissions(self):
-        if self.action in ['current_user', 'get_followers', 'get_following', 'follow']:
+        if self.action in ['current_user', 'get_followers', 'get_following', 'follow','report_user']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
@@ -66,6 +63,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
         )
 
         return Response({'message': 'Báo cáo thành công', 'report_id': report.id}, status=status.HTTP_201_CREATED)
+
     @action(methods=['get'], url_path='followers', detail=True)
     def get_followers(self, request, pk):
         followers = Follow.objects.filter(following=self.get_object(), is_active=True).all()
@@ -122,7 +120,7 @@ class JourneyViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated()]
         elif self.action in ['update', 'partial_update', 'destroy', 'lock_comment', 'delete_participant',
                              'complete_journey']:
-            return [perms.OwnerAuthenticated()]
+            return [perms.OwnerJourneyAuthenticated()]
         else:
             return [permissions.AllowAny()]
 
@@ -535,21 +533,3 @@ def journey_statistics_data(request):
         return JsonResponse(data)
     except ValueError:
         return JsonResponse({'error': 'Invalid date value'}, status=400)
-
-
-
-# @csrf_exempt
-# def analyze_sentiment(request):
-#     if request.method == 'POST':
-#         data = json.loads(request.body.decode('utf-8'))
-#         text_classification = data.get('text')
-#         # return JsonResponse({'result': text_classification})
-#         if text_classification:
-#             res = sentiment(text_classification)
-#             if res is None:
-#                 return JsonResponse({'result': 'Neutral'})
-#             return JsonResponse({'result': res})
-#         return JsonResponse({'error': 'No text provided'}, status=400)
-#     return JsonResponse({'error': 'Invalid request method'}, status=405)
-
-

@@ -57,6 +57,7 @@ class UserDetailSerializer(UserSerializer):
     follower_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     journey_count = serializers.SerializerMethodField()
+
     def get_follower_count(self, obj):
         return Follow.objects.filter(following=obj, is_active=True).count()
 
@@ -65,6 +66,7 @@ class UserDetailSerializer(UserSerializer):
 
     def get_journey_count(self, obj):
         return Journey.objects.filter(user_create=obj).count()
+
     class Meta:
         model = UserSerializer.Meta.model
         fields = UserSerializer.Meta.fields + ['rate', 'follower_count', 'following_count', 'journey_count']
@@ -205,15 +207,13 @@ class CommentJourneyDetailSerializers(serializers.ModelSerializer):
         fields = ['user', 'id', 'content', 'created_date', 'is_member', 'replies']
 
 
-class NotificationSerializer(serializers.ModelSerializer):
-    actor = UserSerializer()
-
-    class Meta:
-        model = Notification
-        fields = ['id', 'post_id', 'journey_id', 'message', 'read', 'actor']
-
-
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = ['reported_user', 'reported_by', 'reason', 'created_date']
+# class NotificationSerializer(serializers.ModelSerializer):
+#     actor = UserSerializer()
+#
+#     class Meta:
+#         model = Notification
+#         fields = ['id', 'post_id', 'journey_id', 'message', 'read', 'actor']
