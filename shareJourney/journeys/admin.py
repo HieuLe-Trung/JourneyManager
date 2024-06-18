@@ -87,6 +87,20 @@ class JourneyAppAdminSite(admin.AdminSite):
     site_header = 'Hệ thống Quản lý hành trình trực tuyến'
     index_title = 'Trang chủ quản trị'
 
+    def get_app_list(self, request, app_label=None):
+        return super().get_app_list(request) + [
+            {
+                'name': 'STASTISTIC',
+                'models': [
+                    {
+                        'name': 'Thống kê các hành trình',
+                        'admin_url': '/admin/statistics',
+                        "view_only": True,
+                    },
+                ]
+            }
+        ]
+
 
 admin_site = JourneyAppAdminSite(name='myjourney')
 
