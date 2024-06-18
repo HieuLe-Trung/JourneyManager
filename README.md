@@ -1,2 +1,2 @@
 # JourneyManager
-https://hieujourney.pythonanywhere.com/
+https://hieujourneyy.pythonanywhere.com/
