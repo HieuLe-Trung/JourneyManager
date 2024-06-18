@@ -22,7 +22,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
     parser_classes = [parsers.MultiPartParser]
 
     def get_permissions(self):
-        if self.action in ['current_user', 'get_followers', 'get_following', 'follow','report_user']:
+        if self.action in ['current_user', 'get_followers', 'get_following', 'follow', 'report_user']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
@@ -130,11 +130,10 @@ class JourneyViewSet(viewsets.ModelViewSet):
         q = self.request.query_params.get("q")  # khi search /?q=... thì lấy giá trị q về
         if q:
             queries = queries.filter(name_journey__icontains=q)
-        if self.action == 'retrieve':
-            queries = queries.order_by('-created_date')
-        else:
+        if self.action == 'list':
             queries = queries.filter(active=True).order_by('-created_date')
-
+        else:
+            queries = queries.order_by('-created_date')
         return queries
 
     @action(detail=True, methods=['get'])
@@ -476,7 +475,7 @@ class CommentListAPIView(generics.ListAPIView):  # cmt của POST
 
     def get_queryset(self):
         post_id = self.kwargs['post_id']
-        return Comment.objects.filter(post_id=post_id)
+        return Comment.objects.filter(post_id=post_id, parent_comment__isnull=True)  # lấy các comment cấp cha
 
 
 class CommentJourneyListAPIView(generics.ListAPIView):
@@ -484,7 +483,7 @@ class CommentJourneyListAPIView(generics.ListAPIView):
 
     def get_queryset(self):  # ds comment của 1 hành trình
         journey_id = self.kwargs['journey_id']
-        return CommentJourney.objects.filter(journey_id=journey_id)
+        return CommentJourney.objects.filter(journey_id=journey_id, parent_comment__isnull=True)
 
 
 def index(request):

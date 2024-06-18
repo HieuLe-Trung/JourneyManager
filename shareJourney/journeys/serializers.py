@@ -153,10 +153,10 @@ class PostDetailSerializer(PostSerializer):
     def get_liked(self, post):
         request = self.context.get('request')
         if request.user.is_authenticated:
-            return post.likepost_set.filter(user=request.user, active=True).exists()
+            return post.likepost_set.filter(user=request.user).exists()
 
     def get_likes_count(self, journey):
-        return journey.likepost_set.filter(active=True).count()
+        return journey.likepost_set.count()
 
     def get_comments_count(self, post):
         return Comment.objects.filter(post=post).count()
